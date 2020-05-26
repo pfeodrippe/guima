@@ -16,7 +16,7 @@
 (def ^:private spec-template
   "
 ----------------------------- MODULE %s -----------------------------
-EXTENDS Naturals, Sequences, IOUtils, FiniteSets
+EXTENDS Naturals, Sequences, IOUtils, FiniteSets, TLC
 %s
 Init == /\\ IOPut(\"fd\", \"stdout\", \"\\nTLAREPL_START\\n\")
         /\\ IOPut(\"fd\", \"stdout\", %s)
