@@ -80,6 +80,8 @@ Spec == Init
 
   (eval-tla "" "Cardinality({3})")
 
+  (eval-tla "" "{2, 3} \\cup {50, 2}")
+
   ())
 
 (comment
