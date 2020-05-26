@@ -60,6 +60,8 @@ Spec == Ini
 
   (eval-tla "" "<<4, 5, 5>> \\o <<10>>")
 
+  (eval-tla "" "60 \\div 7")
+
   (eval-tla "IndexOf(seq, elem) == CHOOSE i \\in 1..Len(seq): seq[i] = elem"
             "IndexOf(<<3, 6, 7>>, 3)")
 

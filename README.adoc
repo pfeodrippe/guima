@@ -2,6 +2,11 @@
 
 It runs a server to run TLA+/TLC expressions, very experimental, try it at ...
 
+== Brainstorm
+
+The main idea is to minimally introduce TLA+ concepts and operators. But for now,
+the user will see a list of operators and try to use them (maybe exercises?).
+
 == Ideas taken/inspired from
 - https://github.com/will62794/tlaplus_repl, mainly the string to make the REPL
 happen, thanks!
