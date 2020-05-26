@@ -1,0 +1,9 @@
+= TLA+ Web Repl
+
+It runs a server to run TLA+/TLC expressions, very experimental, try it at ...
+
+== Ideas taken/inspired from
+- https://github.com/will62794/tlaplus_repl, mainly the string to make the REPL
+happen, thanks!
+- https://github.com/tlaplus/PlusPy, well, we call this project to eval the
+expressions, obrigado!

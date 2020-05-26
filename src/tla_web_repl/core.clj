@@ -1,4 +1,4 @@
-(ns tla-repl.core
+(ns tla-web-repl.core
   (:require
    [clojure.java.shell :as sh]
    [jsonista.core :as json]
