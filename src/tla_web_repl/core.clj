@@ -16,7 +16,7 @@
 (def ^:private spec-template
   "
 ----------------------------- MODULE %s -----------------------------
-EXTENDS Naturals, Sequences, IOUtils
+EXTENDS Naturals, Sequences, IOUtils, FiniteSets
 %s
 Init == /\\ IOPut(\"fd\", \"stdout\", \"\\nTLAREPL_START\\n\")
         /\\ IOPut(\"fd\", \"stdout\", %s)
@@ -77,9 +77,6 @@ Spec == Init
   (eval-tla "" "Tail(<<4, 12>>)")
 
   (eval-tla "" "{1, 2} \\subseteq {1, 2, 3}")
-
-  ;; NOT!! working section -------------------
-
 
   (eval-tla "" "Cardinality({3})")
 
