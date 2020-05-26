@@ -1,0 +1,5 @@
+{:deps
+ {:metosin/pohjavirta {:mvn/version "0.0.1-alpha7"}
+  metosin/jsonista {:mvn/version "0.2.6"}}
+
+ :paths ["src"]}
