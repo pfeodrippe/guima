@@ -56,6 +56,7 @@ Spec == Ini
 
 (comment
 
+  ;; Working section -------------------
   (eval-tla "" "3 + 5")
 
   (eval-tla "" "<<4, 5, 5>> \\o <<10>>")
@@ -69,10 +70,17 @@ Spec == Ini
 
   (eval-tla "" "1 \\in {3, 4, 1}")
 
-  ;; not working below
+  (eval-tla "" "Len(<<3, 2>>)")
+
+  (eval-tla "" "Head(<<3, 2>>)")
+
+
+  ;; NOT!! working section -------------------
+  (eval-tla "" "Tail(<<4>>)")
+
   (eval-tla "" "{1, 2} \\subseteq {1, 2, 3}")
 
-  (eval-tla "" "Cardinality({\"34\"})")
+  (eval-tla "" "Cardinality({\"\"})")
 
   ())
 
