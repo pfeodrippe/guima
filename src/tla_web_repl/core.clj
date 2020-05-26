@@ -16,34 +16,34 @@
 (def ^:private spec-template
   "
 ----------------------------- MODULE %s -----------------------------
-EXTENDS Naturals, IOUtils, Sequences, FiniteSets
+EXTENDS Naturals, Sequences, IOUtils
 %s
-Ini == /\\ IOPut(\"fd\", \"stdout\", \"\\nTLAREPL_START\\n\")
-       /\\ IOPut(\"fd\", \"stdout\", %s)
-       /\\ IOPut(\"fd\", \"stdout\", \"\\nTLAREPL_END\\n\")
-       /\\ TRUE
+Init == /\\ IOPut(\"fd\", \"stdout\", \"\\nTLAREPL_START\\n\")
+        /\\ IOPut(\"fd\", \"stdout\", %s)
+        /\\ IOPut(\"fd\", \"stdout\", \"\\nTLAREPL_END\\n\")
+        /\\ TRUE
 
-Init == Ini
 Next == TRUE
-Spec == Ini
+Spec == Init
 =================================================================================
 ")
 
 (defn- run-repl
   [spec]
   (sh/with-sh-env {"PLUSPYPATH"
-                   ".:/tmp:./PlusPy/modules/lib:./PlusPy/modules/book:./PlusPy/modules/other"}
+                   ".:./PlusPy/modules/lib:./PlusPy/modules/book:./PlusPy/modules/other:/tmp"}
     (sh/sh "python3" "PlusPy/pluspy.py" "-c2" spec)))
 
 (defn- eval-tla
   [ctx expr]
-  (let [{:keys [:err :out]}
+  (let [{:keys [:out :exit] :as response}
         (let [spec-file (java.io.File/createTempFile "TLAWebREPL" ".tla")
               spec-name (-> (.getName spec-file) (str/split #"\.") first)]
+          (println (.getAbsolutePath spec-file))
           (spit spec-file (format spec-template spec-name ctx expr))
-          (run-repl (.getName spec-file)))]
-    (if (not-empty err)
-      err
+          (run-repl spec-name))]
+    (if-not (zero? exit)
+      response
       (try
         (if (re-find #"TLAREPL_START" out)
           (->> out
@@ -74,13 +74,14 @@ Spec == Ini
 
   (eval-tla "" "Head(<<3, 2>>)")
 
-
-  ;; NOT!! working section -------------------
-  (eval-tla "" "Tail(<<4>>)")
+  (eval-tla "" "Tail(<<4, 12>>)")
 
   (eval-tla "" "{1, 2} \\subseteq {1, 2, 3}")
 
-  (eval-tla "" "Cardinality({\"\"})")
+  ;; NOT!! working section -------------------
+
+
+  (eval-tla "" "Cardinality({3})")
 
   ())
 
