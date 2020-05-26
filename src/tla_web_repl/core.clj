@@ -16,7 +16,7 @@
 (def ^:private spec-template
   "
 ----------------------------- MODULE %s -----------------------------
-EXTENDS Naturals, IOUtils
+EXTENDS Naturals, IOUtils, Sequences, FiniteSets
 %s
 Ini == /\\ IOPut(\"fd\", \"stdout\", \"\\nTLAREPL_START\\n\")
        /\\ IOPut(\"fd\", \"stdout\", %s)
@@ -54,7 +54,16 @@ Spec == Ini
         (catch Exception _
           (print out))))))
 
-(eval-tla "" "3 + 1")
+(comment
+
+  (eval-tla "" "3 + 5")
+
+  (eval-tla "Pitoco(B) == ~B" "Pitoco(TRUE)")
+
+  (eval-tla "IndexOf(seq, elem) == CHOOSE i \\in 1..Len(seq): seq[i] = elem"
+            "IndexOf(<<3, 6, 7>>, 3)")
+
+  ())
 
 (comment
 
