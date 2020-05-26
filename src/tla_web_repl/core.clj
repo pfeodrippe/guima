@@ -62,8 +62,17 @@ Spec == Ini
 
   (eval-tla "" "60 \\div 7")
 
-  (eval-tla "IndexOf(seq, elem) == CHOOSE i \\in 1..Len(seq): seq[i] = elem"
+  (eval-tla (->> [
+                  "IndexOf(seq, elem) == CHOOSE i \\in 1..Len(seq): seq[i] = elem"]
+                 (str/join "\n"))
             "IndexOf(<<3, 6, 7>>, 3)")
+
+  (eval-tla "" "1 \\in {3, 4, 1}")
+
+  ;; not working below
+  (eval-tla "" "{1, 2} \\subseteq {1, 2, 3}")
+
+  (eval-tla "" "Cardinality({\"34\"})")
 
   ())
 
