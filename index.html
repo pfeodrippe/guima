@@ -6,7 +6,19 @@
   <script>
     var myCodeMirror = CodeMirror(document.body, {
         value: "1 \\in {1, 5}",
-        mode:  "ruby"
+        mode:  "ruby",
+        extraKeys: {
+            'Shift-Enter': (cm) => {
+                fetch("http://localhost:8080/",
+                      {method: 'GET',
+                       headers: new Headers({'accept': 'application/json',
+                                             'content-type': 'application/json'})})
+                    .then(data => console.log(data.json()))
+            },
+            'Ctrl-Enter': (cm) => {
+                console.log('This is called... sometimes')
+            },
+        },
     });
   </script>
 </body>

@@ -1,8 +1,9 @@
 (ns tla-web-repl.core
   (:require
+   [io.pedestal.http :as http]
+   [io.pedestal.http.route :as route]
    [clojure.java.shell :as sh]
    [jsonista.core :as json]
-   [pohjavirta.server :as server]
    [clojure.string :as str]))
 
 ;; From http://makble.com/clojure-regular-expression-extract-text-between-two-strings
@@ -18,9 +19,9 @@
 ----------------------------- MODULE %s -----------------------------
 EXTENDS Naturals, Sequences, IOUtils, FiniteSets, TLC
 %s
-Init == /\\ IOPut(\"fd\", \"stdout\", \"\\nTLAREPL_START\\n\")
-        /\\ IOPut(\"fd\", \"stdout\", %s)
-        /\\ IOPut(\"fd\", \"stdout\", \"\\nTLAREPL_END\\n\")
+Init == /\\ PrintT(\"TLAREPL_START\")
+        /\\ PrintT(ToString(%s))
+        /\\ PrintT(\"TLAREPL_END\")
         /\\ TRUE
 
 Next == TRUE
@@ -42,6 +43,7 @@ Spec == Init
           (println (.getAbsolutePath spec-file))
           (spit spec-file (format spec-template spec-name ctx expr))
           (run-repl spec-name))]
+    (clojure.pprint/pprint {:v response})
     (if-not (zero? exit)
       response
       (try
@@ -84,40 +86,30 @@ Spec == Init
 
   ())
 
-(comment
-
-  (sh/with-sh-env {"PLUSPYPATH"
-                   ".:/tmp:./PlusPy/modules/lib:./PlusPy/modules/book:./PlusPy/modules/other"}
-    (sh/sh "python3" "PlusPy/pluspy.py" "-c2" "TLAWebREPL4042280218357438252.tla"))
-
-  (sh/with-sh-env {"PLUSPYPATH"
-                   ".:/tmp:./PlusPy/modules/lib:./PlusPy/modules/book:./PlusPy/modules/other"}
-    (sh/sh "python3" "PlusPy/pluspy.py" "-c2" "TLAWebREPL9349548938100035477.tla"))
-
-  (time
-   (->> (doall (map (fn [_]
-                      (sh/with-sh-env {"PLUSPYPATH"
-                                       ".:/tmp:./PlusPy/modules/lib:./PlusPy/modules/book:./PlusPy/modules/other"}
-                        (sh/sh "python3" "PlusPy/pluspy.py" "-c2" "HourClock")))
-                    (range 40)))
-        (map :out)
-        (map println)))
-
-  (time
-   (->> (doall (pmap (fn [_]
-                       (sh/with-sh-env {"PLUSPYPATH"
-                                        ".:./PlusPy/modules/lib:./PlusPy/modules/book:./PlusPy/modules/other"}
-                         (sh/sh "python3" "PlusPy/pluspy.py" "-c2" "HourClock")))
-                     (range 40)))
-        (map :out)
-        (map println)))
-
-  ())
-
-(defn handler [_]
+(defn eval-tla-expression [request]
   {:status 200
-   :headers {"Content-Type" "application/json"}
-   :body (json/write-value-as-bytes {:message "hello"})})
+   :body (json/write-value-as-string
+          {:data (eval-tla "" "{2, 3} \\cup {50, 2}")})})
+
+(def routes
+  (route/expand-routes
+   #{["/" :get eval-tla-expression :route-name :eval-tla-expression]}))
+
+(defn create-server []
+  (http/create-server
+   (-> {::http/routes routes
+        ::http/type :jetty
+        ::http/port 8080
+        ::http/join? false
+        ::http/allowed-origins (constantly true) #_{:creds true :allowed-origins (constantly true) #_#{"http://localhost:8080"
+                                                                                   "http://localhost:4100"}}}
+       http/default-interceptors)))
 
 ;; create and start the server
-#_(-> #'handler server/create server/start)
+(comment
+
+  (def server (create-server))
+  (http/start server)
+  (http/stop server)
+
+  ())
