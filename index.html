@@ -3,15 +3,12 @@
   <link rel="stylesheet" href="vendors/codemirror/lib/codemirror.css">
   <script src="vendors/codemirror/mode/ruby/ruby.js"></script>
 
-  <template id="code-and-result-template">
-    <div style="display: flex; margin-top: 40px;">
-      <div id="my">
-      </div>
-      <div id="other" style="margin-left: 10px; font-size: 85%;">
-        Some TExt
-      </div>
+  <div id="code-and-result" style="display: flex; margin-top: 40px;">
+    <div id="my"></div>
+    <div id="result" style="margin-left: 10px; font-size: 85%;">
+      Some TExt
     </div>
-  </template>
+  </div>
 
   <script>
     var evalHandler =
@@ -35,8 +32,10 @@
 
     var addNewCm = function () {
         var cm = CodeMirror(function(elt) {
-            temp = document.getElementById("code-and-result-template");
-            placeholder = document.body.appendChild(temp.content);
+            x = "fgs";
+            placeholder = document.getElementById("code-and-result");
+            placeholder.children[0].innerHTML = "<div id=\"abc\"></div>"
+            placeholder = document.getElementById("my");
             placeholder.parentNode.replaceChild(elt, placeholder);
         }, {
             mode: 'ruby',
@@ -51,7 +50,7 @@
     };
 
     document.addEventListener("DOMContentLoaded", function(event) {
-        //addNewCm()
+        addNewCm()
     });
   </script>
 </body>
