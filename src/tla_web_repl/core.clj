@@ -91,10 +91,13 @@ Spec == Init
   [(body-params/body-params)
    {:enter
     (fn [{:keys [:request] :as context}]
-      (let [input (get-in request [:json-params :input])]
+      (let [input (get-in request [:json-params :input])
+            input-lines (str/split-lines input)]
         (assoc context :response {:status 200
                                   :body (json/write-value-as-string
-                                         {:data (eval-tla "" input)})})))}])
+                                         {:data (eval-tla (->> (drop-last 1 input-lines)
+                                                               (str/join "\n"))
+                                                          (last input-lines))})})))}])
 
 (def routes
   (route/expand-routes
