@@ -91,16 +91,25 @@ Spec == Init
   [(body-params/body-params)
    {:enter
     (fn [{:keys [:request] :as context}]
-      (let [input (get-in request [:json-params :input])
+      (let [input (str (get-in request [:json-params :input]) "\n")
             input-lines (->> (str/split input #"----+")
                              (mapcat #(->> (str/split % #"\(\*([^\)]+)\*\)")
                                            (remove empty?)
                                            (map str/trim)))
                              seq)
             [expr-context expr] (cond
-                             (= (count input-lines) 2) input-lines
-                             (= (count input-lines) 1) (cons "" input-lines)
-                             :else ["" "\"\""])]
+                                  (= (count input-lines) 2)
+                                  (if (empty? (last input-lines))
+                                    [(first input-lines) "\"\""]
+                                    input-lines)
+
+                                  (= (count input-lines) 1)
+                                  (if (empty? (last input-lines))
+                                    ["" "\"\""]
+                                    (cons "" input-lines))
+
+                                  :else ["" "\"\""])]
+        (println :SS [input-lines expr-context expr])
         (assoc context :response
                (try
                  {:status 200
