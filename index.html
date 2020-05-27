@@ -5,7 +5,7 @@
 
   <div id="code-and-result" style="display: flex; margin-top: 40px;">
     <div id="initial"></div>
-    <div id="result" style="margin-left: 10px; font-size: 85%;">
+    <div></div>
     </div>
   </div>
 
@@ -41,7 +41,8 @@
             // if the problema
             if (placeholder.children[0].id != "initial")
                 placeholder = document.body.appendChild(placeholder.cloneNode(true));
-            placeholder.children[0].outerHTML = `<div id="${identifier}"></div>`
+            placeholder.children[0].outerHTML = `<div id="${identifier}"></div>`;
+            placeholder.children[1].outerHTML = `<div id="result" style="margin-left: 10px; font-size: 85%;"></div>`;
             placeholder = document.getElementById(identifier);
             placeholder.parentNode.replaceChild(elt, placeholder);
         }, {
