@@ -35,12 +35,15 @@
         };
 
     var addNewCm = function () {
+        var isInitial = false;
         var cm = CodeMirror(function(elt) {
             identifier = Math.random().toString(36).substring(7);
             placeholder = document.getElementById("code-and-result");
-            // if the problema
+            // if the placeholder identifier is initial, does not need to clone it
             if (placeholder.children[0].id != "initial")
                 placeholder = document.body.appendChild(placeholder.cloneNode(true));
+            else
+                isInitial = true;
             placeholder.children[0].outerHTML = `<div id="${identifier}"></div>`;
             placeholder.children[1].outerHTML = `<div id="result" style="margin-left: 10px; font-size: 95%;"></div>`;
             placeholder = document.getElementById(identifier);
@@ -54,7 +57,14 @@
                 'Alt-Enter': (cm) => addNewCm()
             },
         });
+
         cm.setSize("50%", "auto");
+
+        if(!isInitial)
+            cm.on("beforeChange", function(cm, event) {
+                if(cm.getValue() == "" && event.to.line == 0 && event.to.ch == 0 && event.origin == "+delete")
+                    cm.getWrapperElement().parentNode.remove();
+            });
     };
 
     document.addEventListener("DOMContentLoaded", function(event) {
