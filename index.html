@@ -4,7 +4,7 @@
   <script src="vendors/codemirror/mode/ruby/ruby.js"></script>
 
   <div id="code-and-result" style="display: flex; margin-top: 40px;">
-    <div id="my"></div>
+    <div id="initial"></div>
     <div id="result" style="margin-left: 10px; font-size: 85%;">
       Some TExt
     </div>
@@ -32,10 +32,12 @@
 
     var addNewCm = function () {
         var cm = CodeMirror(function(elt) {
-            x = "fgs";
+            identifier = Math.random().toString(36).substring(7);
             placeholder = document.getElementById("code-and-result");
-            placeholder.children[0].innerHTML = "<div id=\"abc\"></div>"
-            placeholder = document.getElementById("my");
+            if (placeholder.children[0].id != "initial")
+                placeholder = document.body.appendChild(placeholder.cloneNode(true));
+            placeholder.children[0].outerHTML = `<div id="${identifier}"></div>`
+            placeholder = document.getElementById(identifier);
             placeholder.parentNode.replaceChild(elt, placeholder);
         }, {
             mode: 'ruby',
@@ -50,7 +52,7 @@
     };
 
     document.addEventListener("DOMContentLoaded", function(event) {
-        addNewCm()
+       addNewCm()
     });
   </script>
 </body>
