@@ -6,7 +6,6 @@
   <div id="code-and-result" style="display: flex; margin-top: 40px;">
     <div id="initial"></div>
     <div id="result" style="margin-left: 10px; font-size: 85%;">
-      Some TExt
     </div>
   </div>
 
@@ -22,10 +21,15 @@
                 .then(response => response.json())
                 .then(
                     function(data) {
-                        if('data' in data)
-                            console.log(data.data);
-                        else
-                            console.log(data.error.message);
+                        resultBlock = cm.getWrapperElement().parentNode.querySelector("#result");
+                        if('data' in data) {
+                            resultBlock.style.color = "#333333";
+                            resultBlock.innerHTML = data.data;
+                        }
+                        else {
+                            resultBlock.style.color = "#cc0000";
+                            resultBlock.innerHTML = data.error.message;
+                        }
                     })
                 .catch(error => console.log(error))
         };
@@ -34,6 +38,7 @@
         var cm = CodeMirror(function(elt) {
             identifier = Math.random().toString(36).substring(7);
             placeholder = document.getElementById("code-and-result");
+            // if the problema
             if (placeholder.children[0].id != "initial")
                 placeholder = document.body.appendChild(placeholder.cloneNode(true));
             placeholder.children[0].outerHTML = `<div id="${identifier}"></div>`
