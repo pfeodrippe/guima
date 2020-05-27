@@ -6,7 +6,8 @@
    [io.pedestal.http.body-params :as body-params]
    [io.pedestal.http.route :as route]
    [jsonista.core :as json]
-   [clojure.set :as set]))
+   [clojure.set :as set]
+   [clojure.java.io :as io]))
 
 ;; From http://makble.com/clojure-regular-expression-extract-text-between-two-strings
 (defn make-literal [a]
@@ -114,9 +115,17 @@ Spec == Init
                     :body (json/write-value-as-string
                            {:error {:message (:out (ex-data e))}})})))))}])
 
+(def main-page
+  [http/html-body
+   {:enter
+    (fn [context]
+      (assoc context :response {:status 200
+                                :body (slurp (io/resource "public/index.html"))}))}])
+
 (def routes
   (route/expand-routes
-   #{["/" :post eval-tla-expression :route-name :eval-tla-expression]}))
+   #{["/" :get main-page :route-name :main-page]
+     ["/eval-tla-expression" :post eval-tla-expression :route-name :eval-tla-expression]}))
 
 (defn create-server []
   (http/create-server
@@ -124,7 +133,9 @@ Spec == Init
         ::http/type :jetty
         ::http/port 8080
         ::http/join? false
+        ::http/resource-path "/public"
         ::http/allowed-origins (constantly true)
+        ::http/secure-headers nil
         #_{:creds true :allowed-origins (constantly true) #_#{"http://localhost:8080"
                                                               "http://localhost:4100"}}}
        http/default-interceptors)))
