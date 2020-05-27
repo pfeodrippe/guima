@@ -10,10 +10,13 @@
         extraKeys: {
             'Shift-Enter': (cm) => {
                 fetch("http://localhost:8080/",
-                      {method: 'GET',
+                      {method: 'POST',
+                       mode: 'cors',
+                       body: JSON.stringify({"input": cm.getValue()}),
                        headers: new Headers({'accept': 'application/json',
                                              'content-type': 'application/json'})})
-                    .then(data => console.log(data.json()))
+                    .then(response => response.json())
+                    .then(data => console.log(data.data))
             },
             'Ctrl-Enter': (cm) => {
                 console.log('This is called... sometimes')

@@ -1,10 +1,11 @@
 (ns tla-web-repl.core
   (:require
-   [io.pedestal.http :as http]
-   [io.pedestal.http.route :as route]
    [clojure.java.shell :as sh]
-   [jsonista.core :as json]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [io.pedestal.http :as http]
+   [io.pedestal.http.body-params :as body-params]
+   [io.pedestal.http.route :as route]
+   [jsonista.core :as json]))
 
 ;; From http://makble.com/clojure-regular-expression-extract-text-between-two-strings
 (defn make-literal [a]
@@ -86,14 +87,18 @@ Spec == Init
 
   ())
 
-(defn eval-tla-expression [request]
-  {:status 200
-   :body (json/write-value-as-string
-          {:data (eval-tla "" "{2, 3} \\cup {50, 2}")})})
+(def eval-tla-expression
+  [(body-params/body-params)
+   {:enter
+    (fn [{:keys [:request] :as context}]
+      (let [input (get-in request [:json-params :input])]
+        (assoc context :response {:status 200
+                                  :body (json/write-value-as-string
+                                         {:data (eval-tla "" input)})})))}])
 
 (def routes
   (route/expand-routes
-   #{["/" :get eval-tla-expression :route-name :eval-tla-expression]}))
+   #{["/" :post eval-tla-expression :route-name :eval-tla-expression]}))
 
 (defn create-server []
   (http/create-server
@@ -101,15 +106,17 @@ Spec == Init
         ::http/type :jetty
         ::http/port 8080
         ::http/join? false
-        ::http/allowed-origins (constantly true) #_{:creds true :allowed-origins (constantly true) #_#{"http://localhost:8080"
-                                                                                   "http://localhost:4100"}}}
+        ::http/allowed-origins (constantly true)
+        #_{:creds true :allowed-origins (constantly true) #_#{"http://localhost:8080"
+                                                              "http://localhost:4100"}}}
        http/default-interceptors)))
 
 ;; create and start the server
 (comment
 
-  (def server (create-server))
-  (http/start server)
+  (do (def server (create-server))
+      (http/start server))
+
   (http/stop server)
 
   ())
