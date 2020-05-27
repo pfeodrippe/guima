@@ -50,15 +50,12 @@ Spec == Init
     (if-not (zero? exit)
       (throw
        (ex-info "Error evaluating spec" response))
-      (try
-        (if (re-find #"TLAREPL_START" out)
-          (->> out
-               (extract-anything-between "TLAREPL_START" "TLAREPL_END")
-               (#(subs % 1 (dec (count %)))))
-          (do (print out)
-              out))
-        (catch Exception _
-          (print out))))))
+      (if (re-find #"TLAREPL_START" out)
+        (->> out
+             (extract-anything-between "TLAREPL_START" "TLAREPL_END")
+             (#(subs % 1 (dec (count %)))))
+        (do (print out)
+            out)))))
 
 (comment
 
@@ -95,21 +92,20 @@ Spec == Init
    {:enter
     (fn [{:keys [:request] :as context}]
       (let [input (get-in request [:json-params :input])
-            input-lines (or (->> (str/split-lines input)
-                                 (mapcat #(->> (str/split % #"\(\*([^\)]+)\*\)")
-                                               (remove empty?)
-                                               (map str/trim)))
-                                 seq)
-                            ["\"\""])]
+            input-lines (->> (str/split input #"----+")
+                             (mapcat #(->> (str/split % #"\(\*([^\)]+)\*\)")
+                                           (remove empty?)
+                                           (map str/trim)))
+                             seq)
+            [expr-context expr] (cond
+                             (= (count input-lines) 2) input-lines
+                             (= (count input-lines) 1) (cons "" input-lines)
+                             :else ["" "\"\""])]
         (assoc context :response
                (try
                  {:status 200
                   :body (json/write-value-as-string
-                         {:data (eval-tla (->> (drop-last 1 input-lines)
-                                               (str/join "\n"))
-                                          (if (empty? (last input-lines))
-                                            "\"\""
-                                            (last input-lines)))})}
+                         {:data (eval-tla expr-context expr)})}
                  (catch Exception e
                    {:status 400
                     :body (json/write-value-as-string

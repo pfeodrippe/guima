@@ -42,7 +42,7 @@
             if (placeholder.children[0].id != "initial")
                 placeholder = document.body.appendChild(placeholder.cloneNode(true));
             placeholder.children[0].outerHTML = `<div id="${identifier}"></div>`;
-            placeholder.children[1].outerHTML = `<div id="result" style="margin-left: 10px; font-size: 85%;"></div>`;
+            placeholder.children[1].outerHTML = `<div id="result" style="margin-left: 10px; font-size: 95%;"></div>`;
             placeholder = document.getElementById(identifier);
             placeholder.parentNode.replaceChild(elt, placeholder);
         }, {
