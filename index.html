@@ -3,6 +3,16 @@
   <link rel="stylesheet" href="vendors/codemirror/lib/codemirror.css">
   <script src="vendors/codemirror/mode/ruby/ruby.js"></script>
 
+  <template id="code-and-result-template">
+    <div style="display: flex; margin-top: 40px;">
+      <div id="my">
+      </div>
+      <div id="other" style="margin-left: 10px; font-size: 85%;">
+        Some TExt
+      </div>
+    </div>
+  </template>
+
   <script>
     var evalHandler =
         (cm) => {
@@ -24,7 +34,11 @@
         };
 
     var addNewCm = function () {
-        var cm = CodeMirror(document.body, {
+        var cm = CodeMirror(function(elt) {
+            temp = document.getElementById("code-and-result-template");
+            placeholder = document.body.appendChild(temp.content);
+            placeholder.parentNode.replaceChild(elt, placeholder);
+        }, {
             mode: 'ruby',
             viewportMargin: Infinity,
             extraKeys: {
@@ -34,7 +48,10 @@
             },
         });
         cm.setSize("50%", "auto");
-    }
-    addNewCm()
+    };
+
+    document.addEventListener("DOMContentLoaded", function(event) {
+        //addNewCm()
+    });
   </script>
 </body>
