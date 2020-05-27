@@ -4,22 +4,30 @@
   <script src="vendors/codemirror/mode/ruby/ruby.js"></script>
 
   <script>
+    var evalHandler =
+        (cm) => {
+            fetch('http://localhost:8080/',
+                  {method: 'POST',
+                   mode: 'cors',
+                   body: JSON.stringify({'input': cm.getValue()}),
+                   headers: new Headers({'accept': 'application/json',
+                                         'content-type': 'application/json'})})
+                .then(response => response.json())
+                .then(
+                    function(data) {
+                        if('data' in data)
+                            console.log(data.data);
+                        else
+                            console.log(data.error.message);
+                    })
+                .catch(error => console.log(error))
+        };
+
     var myCodeMirror = CodeMirror(document.body, {
         mode:  "ruby",
         extraKeys: {
-            'Shift-Enter': (cm) => {
-                fetch('http://localhost:8080/',
-                      {method: 'POST',
-                       mode: 'cors',
-                       body: JSON.stringify({'input': cm.getValue()}),
-                       headers: new Headers({'accept': 'application/json',
-                                             'content-type': 'application/json'})})
-                    .then(response => response.json())
-                    .then(data => console.log(data.data))
-            },
-            'Ctrl-Enter': (cm) => {
-                console.log('This is called... sometimes')
-            },
+            'Shift-Enter': evalHandler,
+            'Ctrl-Enter': evalHandler
         },
     });
   </script>

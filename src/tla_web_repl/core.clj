@@ -5,7 +5,8 @@
    [io.pedestal.http :as http]
    [io.pedestal.http.body-params :as body-params]
    [io.pedestal.http.route :as route]
-   [jsonista.core :as json]))
+   [jsonista.core :as json]
+   [clojure.set :as set]))
 
 ;; From http://makble.com/clojure-regular-expression-extract-text-between-two-strings
 (defn make-literal [a]
@@ -46,7 +47,8 @@ Spec == Init
           (run-repl spec-name))]
     (clojure.pprint/pprint {:v response})
     (if-not (zero? exit)
-      response
+      (throw
+       (ex-info "Error evaluating spec" response))
       (try
         (if (re-find #"TLAREPL_START" out)
           (->> out
@@ -93,11 +95,17 @@ Spec == Init
     (fn [{:keys [:request] :as context}]
       (let [input (get-in request [:json-params :input])
             input-lines (str/split-lines input)]
-        (assoc context :response {:status 200
-                                  :body (json/write-value-as-string
-                                         {:data (eval-tla (->> (drop-last 1 input-lines)
-                                                               (str/join "\n"))
-                                                          (last input-lines))})})))}])
+        (assoc context :response
+               (try
+                 {:status 200
+                  :body (json/write-value-as-string
+                         {:data (eval-tla (->> (drop-last 1 input-lines)
+                                               (str/join "\n"))
+                                          (last input-lines))})}
+                 (catch Exception e
+                   {:status 400
+                    :body (json/write-value-as-string
+                           {:error {:message (:out (ex-data e))}})})))))}])
 
 (def routes
   (route/expand-routes
