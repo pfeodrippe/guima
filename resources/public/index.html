@@ -3,13 +3,7 @@
   <link rel="stylesheet" href="vendors/codemirror/lib/codemirror.css">
   <script src="vendors/codemirror/mode/ruby/ruby.js"></script>
 
-  <div id="code-and-result" style="display: flex; margin-top: 40px;">
-    <div id="initial"></div>
-    <div></div>
-    </div>
-  </div>
-
-  <script>
+   <script>
     var evalHandler =
         (cm) => {
             fetch('http://localhost:8080/eval-tla-expression',
@@ -60,10 +54,16 @@
 
         cm.setSize("50%", "auto");
 
+        cm.focus();
+
         if(!isInitial)
             cm.on("beforeChange", function(cm, event) {
-                if(cm.getValue() == "" && event.to.line == 0 && event.to.ch == 0 && event.origin == "+delete")
-                    cm.getWrapperElement().parentNode.remove();
+                if(cm.getValue() == "" && event.to.line == 0 && event.to.ch == 0 && event.origin == "+delete"){
+                    el = cm.getWrapperElement().parentNode;
+                    console.log(el);
+                    el.previousElementSibling.children[0].CodeMirror.focus();
+                    el.remove();
+                }
             });
     };
 
@@ -71,4 +71,11 @@
        addNewCm()
     });
   </script>
+
+  <div id="code-and-result" style="display: flex; margin-top: 40px;">
+    <div id="initial"></div>
+    <div></div>
+    </div>
+  </div>
+
 </body>
