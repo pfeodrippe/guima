@@ -12,3 +12,4 @@ the user will see a list of operators and try to use them (maybe exercises?).
 happen, thanks!
 - https://github.com/tlaplus/PlusPy, well, we call this project to eval the
 expressions, obrigado!
+- https://github.com/mhuebert/maria, awesome editor UI, gracias!

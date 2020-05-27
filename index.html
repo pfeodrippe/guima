@@ -23,14 +23,18 @@
                 .catch(error => console.log(error))
         };
 
-    var cm = CodeMirror(document.body, {
-        mode: 'ruby',
-        viewportMargin: Infinity,
-        extraKeys: {
-            'Shift-Enter': evalHandler,
-            'Ctrl-Enter': evalHandler
-        },
-    });
-    cm.setSize("50%", "auto");
+    var addNewCm = function () {
+        var cm = CodeMirror(document.body, {
+            mode: 'ruby',
+            viewportMargin: Infinity,
+            extraKeys: {
+                'Shift-Enter': evalHandler,
+                'Ctrl-Enter': evalHandler,
+                'Alt-Enter': (cm) => addNewCm()
+            },
+        });
+        cm.setSize("50%", "auto");
+    }
+    addNewCm()
   </script>
 </body>
