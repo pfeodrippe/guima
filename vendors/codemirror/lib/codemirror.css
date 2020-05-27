@@ -11,7 +11,7 @@
 /* PADDING */
 
 .CodeMirror-lines {
-  padding: 4px 0; /* Vertical padding around content */
+  padding: 20px 20px; /* Vertical padding around content */
 }
 .CodeMirror pre.CodeMirror-line,
 .CodeMirror pre.CodeMirror-line-like {
@@ -160,6 +160,7 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
   position: relative;
   overflow: hidden;
   background: white;
+  margin-left: -7px;
 }
 
 .CodeMirror-scroll {
@@ -168,7 +169,7 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
   /* See overflow: hidden in .CodeMirror */
   margin-bottom: -50px; margin-right: -50px;
   padding-bottom: 50px;
-  height: 100%;
+  /*height: 100%;*/
   outline: none; /* Prevent dragging from highlighting the element */
   position: relative;
 }
@@ -244,7 +245,7 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
   border-width: 0;
   background: transparent;
   font-family: inherit;
-  font-size: inherit;
+  font-size: 85%;
   margin: 0;
   white-space: pre;
   word-wrap: normal;

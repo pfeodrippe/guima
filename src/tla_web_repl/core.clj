@@ -94,14 +94,21 @@ Spec == Init
    {:enter
     (fn [{:keys [:request] :as context}]
       (let [input (get-in request [:json-params :input])
-            input-lines (str/split-lines input)]
+            input-lines (or (->> (str/split-lines input)
+                                 (mapcat #(->> (str/split % #"\(\*([^\)]+)\*\)")
+                                               (remove empty?)
+                                               (map str/trim)))
+                                 seq)
+                            ["\"\""])]
         (assoc context :response
                (try
                  {:status 200
                   :body (json/write-value-as-string
                          {:data (eval-tla (->> (drop-last 1 input-lines)
                                                (str/join "\n"))
-                                          (last input-lines))})}
+                                          (if (empty? (last input-lines))
+                                            "\"\""
+                                            (last input-lines)))})}
                  (catch Exception e
                    {:status 400
                     :body (json/write-value-as-string

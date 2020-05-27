@@ -23,12 +23,14 @@
                 .catch(error => console.log(error))
         };
 
-    var myCodeMirror = CodeMirror(document.body, {
-        mode:  "ruby",
+    var cm = CodeMirror(document.body, {
+        mode: 'ruby',
+        viewportMargin: Infinity,
         extraKeys: {
             'Shift-Enter': evalHandler,
             'Ctrl-Enter': evalHandler
         },
     });
+    cm.setSize("50%", "auto");
   </script>
 </body>
