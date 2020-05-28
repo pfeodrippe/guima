@@ -1,4 +1,4 @@
-(ns tla-web-repl.core
+(ns guima.core
   (:require
    [clojure.java.shell :as sh]
    [clojure.string :as str]
@@ -7,7 +7,8 @@
    [io.pedestal.http.route :as route]
    [jsonista.core :as json]
    [clojure.set :as set]
-   [clojure.java.io :as io]))
+   [clojure.java.io :as io])
+  (:gen-class))
 
 ;; From http://makble.com/clojure-regular-expression-extract-text-between-two-strings
 (defn make-literal [a]
@@ -133,18 +134,23 @@ Spec == Init
    #{["/" :get main-page :route-name :main-page]
      ["/eval-tla-expression" :post eval-tla-expression :route-name :eval-tla-expression]}))
 
-(defn create-server []
+(defn create-server [env]
   (http/create-server
    (-> {::http/routes routes
         ::http/type :jetty
         ::http/port 8080
-        ::http/join? false
         ::http/resource-path "/public"
-        ::http/allowed-origins (constantly true)
         ::http/secure-headers nil
+        ::http/allowed-origins (constantly true)
         #_{:creds true :allowed-origins (constantly true) #_#{"http://localhost:8080"
                                                               "http://localhost:4100"}}}
+       (cond-> (= env :dev) (assoc ::http/join false))
        http/default-interceptors)))
+
+(defn -main
+  [& [env]]
+  (let [server (create-server (keyword env))]
+    (http/start server)))
 
 ;; create and start the server
 (comment
