@@ -1,5 +1,5 @@
 {:source-paths ["src"]
  :builds {:app {:target :browser
-                :output-dir "resources/public/js"
-                :asset-path "/js"
+                :output-dir "resources/public/compiled"
+                :asset-path "/compiled"
                 :modules {:main {:init-fn guima.web-app/main!}}}}}

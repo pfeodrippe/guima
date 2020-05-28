@@ -11,5 +11,6 @@ __pycache__
 /node_modules/
 /out/
 /.shadow-cljs/
+/resources/public/compiled/
 
 /letsencrypt
