@@ -9,7 +9,7 @@
    <script>
     var evalHandler =
         (cm) => {
-            fetch('#{window.location.href}eval-tla-expression',
+            fetch(`#{window.location.href}eval-tla-expression`,
                   {method: 'POST',
                    mode: 'cors',
                    body: JSON.stringify({'input': cm.getValue()}),
