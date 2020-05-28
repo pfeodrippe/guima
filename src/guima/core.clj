@@ -8,6 +8,8 @@
    [jsonista.core :as json]
    [clojure.set :as set]
    [clojure.java.io :as io])
+  (:import
+   (java.util Base64))
   (:gen-class))
 
 ;; From http://makble.com/clojure-regular-expression-extract-text-between-two-strings
@@ -140,6 +142,11 @@ Spec == Init
    #{["/" :get main-page :route-name :main-page]
      ["/health-check" :get health-check :route-name :health-check]
      ["/eval-tla-expression" :post eval-tla-expression :route-name :eval-tla-expression]}))
+
+(defn decode [to-decode]
+  (String. (.decode (Base64/getDecoder) to-decode)))
+
+;; Use `btoa` at javascript and `decode` here
 
 (defn create-server [env]
   (http/create-server
