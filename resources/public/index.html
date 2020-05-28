@@ -31,16 +31,27 @@
                 .catch(error => console.log(error))
         };
 
-    var addNewCm = function () {
+    var addNewCm = function (beforeCm) {
         var isInitial = false;
         var cm = CodeMirror(function(elt) {
             identifier = Math.random().toString(36).substring(7);
             placeholder = document.getElementById("code-and-result");
+
             // if the placeholder identifier is initial, does not need to clone it
-            if (placeholder.children[0].id != "initial")
-                placeholder = document.body.appendChild(placeholder.cloneNode(true));
+            if (placeholder.children[0].id != "initial") {
+                before = beforeCm.getWrapperElement().parentNode;
+                if (before.nextSibling) {
+                    placeholder = before.parentNode.
+                        insertBefore(placeholder.cloneNode(true), before.nextSibling);
+                }
+                else {
+                    placeholder = before.parentNode.
+                        appendChild(placeholder.cloneNode(true));
+                }
+            }
             else
                 isInitial = true;
+
             placeholder.children[0].outerHTML = `<div id="${identifier}"></div>`;
             placeholder.children[1].outerHTML = `<div id="result" style="margin-left: 10px; font-size: 100%; align-self: center; font-family: monospace; width: 50%;"></div>`;
             placeholder = document.getElementById(identifier);
@@ -51,7 +62,7 @@
             extraKeys: {
                 'Shift-Enter': evalHandler,
                 'Ctrl-Enter': evalHandler,
-                'Alt-Enter': (cm) => addNewCm()
+                'Alt-Enter': (cm) => addNewCm(cm)
             },
         });
 
@@ -82,7 +93,7 @@
     };
 
     document.addEventListener("DOMContentLoaded", function(event) {
-       addNewCm()
+       addNewCm(null)
     });
     </script>
 
