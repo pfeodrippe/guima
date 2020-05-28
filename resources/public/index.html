@@ -69,7 +69,7 @@
             });
 
         cm.on("keydown", function(cm, event) {
-            if(!isInitial && event.key == "ArrowUp" && cm.lastLine() == cm.getCursor().line) {
+            if(!isInitial && event.key == "ArrowUp" && cm.getCursor().line == 0 && cm.getCursor().ch == 0) {
                 el = cm.getWrapperElement().parentNode;
                 el.previousElementSibling.children[0].CodeMirror.focus();
             }
