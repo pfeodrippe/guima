@@ -129,9 +129,16 @@ Spec == Init
       (assoc context :response {:status 200
                                 :body (slurp (io/resource "public/index.html"))}))}])
 
+(def health-check
+  [http/html-body
+   {:enter
+    (fn [context]
+      (assoc context :response {:status 200 :body ""}))}])
+
 (def routes
   (route/expand-routes
    #{["/" :get main-page :route-name :main-page]
+     ["/health-check" :get health-check :route-name :health-check]
      ["/eval-tla-expression" :post eval-tla-expression :route-name :eval-tla-expression]}))
 
 (defn create-server [env]
