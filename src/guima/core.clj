@@ -136,7 +136,7 @@ Spec == Init
     (fn [context]
       (assoc context
              :response {:status 302
-                        :headers  {"Location" "/editor"}}))}])
+                        :headers  {"location" "/editor"}}))}])
 
 (def health-check
   [http/html-body
@@ -149,7 +149,7 @@ Spec == Init
    #{["/" :get main-page :route-name :main-page]
      ["/editor" :get editor :route-name :editor]
      ["/health-check" :get health-check :route-name :health-check]
-     ["/eval-tla-expression" :post eval-tla-expression :route-name :eval-tla-expression]}))
+     ["/api/eval-tla-expression" :post eval-tla-expression :route-name :eval-tla-expression]}))
 
 (defn decode [to-decode]
   (String. (.decode (Base64/getDecoder) to-decode)))
