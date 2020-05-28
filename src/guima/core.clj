@@ -141,6 +141,7 @@ Spec == Init
         ::http/resource-path "/public"
         ::http/secure-headers nil
         ::http/allowed-origins (constantly true)
+        ::http/host "0.0.0.0"
         #_{:creds true :allowed-origins (constantly true) #_#{"http://localhost:8080"
                                                               "http://localhost:4100"}}}
        (cond->
