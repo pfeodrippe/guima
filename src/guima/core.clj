@@ -173,7 +173,7 @@ Spec == Init
 ;; create and start the server
 (comment
 
-  (do (def server (create-server))
+  (do (def server (create-server :dev))
       (http/start server))
 
   (http/stop server)

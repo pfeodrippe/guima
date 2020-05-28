@@ -42,7 +42,7 @@
             else
                 isInitial = true;
             placeholder.children[0].outerHTML = `<div id="${identifier}"></div>`;
-            placeholder.children[1].outerHTML = `<div id="result" style="margin-left: 10px; font-size: 85%; align-self: center; font-family: monospace;"></div>`;
+            placeholder.children[1].outerHTML = `<div id="result" style="margin-left: 10px; font-size: 100%; align-self: center; font-family: monospace;"></div>`;
             placeholder = document.getElementById(identifier);
             placeholder.parentNode.replaceChild(elt, placeholder);
         }, {
@@ -76,7 +76,7 @@
     </script>
 
    <div style="display: flex">
-     <div style="display: flex; justify-content:flex-start; width:100%; padding:10px 15px 7px 10px; font-size: 12px; color: #666666">
+     <div style="display: flex; justify-content:flex-start; width:100%; padding:10px 15px 7px 10px; font-size: 14px; color: #666666">
        <b>Guima&nbsp;</b>
        | A TLA+ REPL
      </div>
@@ -88,7 +88,7 @@
      </div>
    </div>
 
-   <div id="code-and-result" style="display: flex; margin-top: 10px;">
+   <div id="code-and-result" style="display: flex; margin-top: 10px; font-size: 20px">
      <div id="initial"></div>
     <div></div>
     </div>
