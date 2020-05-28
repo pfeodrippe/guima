@@ -148,7 +148,7 @@ Spec == Init
            (= env :dev) (assoc ::http/join? false
                                ::http/port 8080)
            (= env :prod) (assoc ::http/join? true
-                                ::http/port 443))
+                                ::http/port 80))
        http/default-interceptors)))
 
 (defn -main
