@@ -138,13 +138,16 @@ Spec == Init
   (http/create-server
    (-> {::http/routes routes
         ::http/type :jetty
-        ::http/port 8080
         ::http/resource-path "/public"
         ::http/secure-headers nil
         ::http/allowed-origins (constantly true)
         #_{:creds true :allowed-origins (constantly true) #_#{"http://localhost:8080"
                                                               "http://localhost:4100"}}}
-       (cond-> (= env :dev) (assoc ::http/join false))
+       (cond->
+           (= env :dev) (assoc ::http/join? false
+                               ::http/port 8080)
+           (= env :prod) (assoc ::http/join? true
+                                ::http/port 80))
        http/default-interceptors)))
 
 (defn -main
