@@ -124,12 +124,19 @@ Spec == Init
                     :body (json/write-value-as-string
                            {:error {:message (:out (ex-data e))}})})))))}])
 
-(def main-page
+(def editor
   [http/html-body
    {:enter
     (fn [context]
       (assoc context :response {:status 200
                                 :body (slurp (io/resource "public/index.html"))}))}])
+
+(def main-page
+  [{:enter
+    (fn [context]
+      (assoc context
+             :response {:status 302
+                        :headers  {"Location" "/editor"}}))}])
 
 (def health-check
   [http/html-body
@@ -140,6 +147,7 @@ Spec == Init
 (def routes
   (route/expand-routes
    #{["/" :get main-page :route-name :main-page]
+     ["/editor" :get editor :route-name :editor]
      ["/health-check" :get health-check :route-name :health-check]
      ["/eval-tla-expression" :post eval-tla-expression :route-name :eval-tla-expression]}))
 
