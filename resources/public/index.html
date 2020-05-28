@@ -42,7 +42,7 @@
             else
                 isInitial = true;
             placeholder.children[0].outerHTML = `<div id="${identifier}"></div>`;
-            placeholder.children[1].outerHTML = `<div id="result" style="margin-left: 10px; font-size: 100%; align-self: center; font-family: monospace;"></div>`;
+            placeholder.children[1].outerHTML = `<div id="result" style="margin-left: 10px; font-size: 100%; align-self: center; font-family: monospace; width: 50%;"></div>`;
             placeholder = document.getElementById(identifier);
             placeholder.parentNode.replaceChild(elt, placeholder);
         }, {
