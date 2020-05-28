@@ -1,1 +1,0 @@
-{"version":3,"file":"guima.web_app.js","sources":["guima/web_app.cljs"],"mappings":";;AAEA,2BAAA,3BAAMA;AAAN,AAEE,QAAA,MAAA","names":["guima.web-app/main!"],"sourcesContent":["(ns guima.web-app)\n\n(defn main!\n  []\n  (+ 1 2))\n"]}
