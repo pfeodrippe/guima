@@ -2,4 +2,5 @@
  :builds {:app {:target :browser
                 :output-dir "resources/public/compiled"
                 :asset-path "/compiled"
-                :modules {:main {:init-fn guima.web-app/main!}}}}}
+                :modules {:main {:init-fn guima.web-app/main!}}}}
+ :dependencies [[cljs-http "0.1.46"]]}

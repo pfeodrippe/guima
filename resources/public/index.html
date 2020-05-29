@@ -8,30 +8,6 @@
   <style>.bmc-button img{height: 34px !important;width: 35px !important;margin-bottom: 1px !important;box-shadow: none !important;border: none !important;vertical-align: middle !important;}.bmc-button{padding: 7px 15px 7px 10px !important;line-height: 35px !important;height:51px !important;text-decoration: none !important;;color:#000000 !important;background-color:#FFDD00 !important;border-radius: 5px !important;border: 1px solid transparent !important;padding: 7px 15px 7px 10px !important;font-size: 20px !important;letter-spacing:0.6px !important;box-shadow: 0px 1px 2px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;font-family:'Arial', cursive !important;-webkit-box-sizing: border-box !important;box-sizing: border-box !important;}.bmc-button:hover, .bmc-button:active, .bmc-button:focus {-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;text-decoration: none !important;box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;opacity: 0.85 !important;color:#000000 !important;}</style><link href="https://fonts.googleapis.com/css?family=Arial" rel="stylesheet">
 
    <script>
-    var evalHandler =
-        (cm) => {
-            fetch(`${window.location.origin}/api/eval-tla-expression`,
-                  {method: 'POST',
-                   mode: 'cors',
-                   body: JSON.stringify({'input': cm.getValue()}),
-                   headers: new Headers({'accept': 'application/json',
-                                         'content-type': 'application/json'})})
-                .then(response => response.json())
-                .then(
-                    function(data) {
-                        resultBlock = cm.getWrapperElement().parentNode.querySelector("#result");
-                        if('data' in data) {
-                            resultBlock.style.color = "#333333";
-                            resultBlock.innerHTML = data.data;
-                        }
-                        else {
-                            resultBlock.style.color = "#cc0000";
-                            resultBlock.innerHTML = data.error.message;
-                        }
-                    })
-                .catch(error => console.log(error))
-        };
-
     var addNewCm = function (beforeCm) {
         var isInitial = false;
         var cm = CodeMirror(function(elt) {
@@ -61,8 +37,8 @@
             mode: 'ruby',
             viewportMargin: Infinity,
             extraKeys: {
-                'Shift-Enter': evalHandler,
-                'Ctrl-Enter': evalHandler,
+                'Shift-Enter': guima.web_app.eval_handler,
+                'Ctrl-Enter': guima.web_app.eval_handler,
                 'Alt-Enter': (cm) => addNewCm(cm)
             },
         });
