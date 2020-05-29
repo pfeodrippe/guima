@@ -5,20 +5,20 @@
 
 (defn- json-parse
   [s]
-  (js->clj (js/JSON.parse s)))
+  (js->clj (js/JSON.parse s) :keywordize-keys true))
 
 (defn eval-handler
   [cm]
   (go (let [response (<! (http/post (str (.. js/window -location -origin) "/api/eval-tla-expression")
                                     {:json-params {:input (.getValue cm)}}))
-            result-el (.. cm getWrapperElement -parentNode (querySelector "#result"))]
+            result-el (.. cm getWrapperElement -parentNode (querySelector "#result"))
+            body (json-parse (:body response))]
         (if (= (:status response) 200)
           (do (set! (.-color (.-style result-el)) "#333333")
-              (set! (.-innerHTML result-el)
-                    (get (json-parse (:body response)) "data")))
+              (set! (.-innerHTML result-el) (:data body)))
           (do (set! (.-color (.-style result-el)) "#cc0000")
               (set! (.-innerHTML result-el)
-                    (get-in (json-parse (:body response)) ["error" "message"]) ))))))
+                    (get-in body [:error :message])))))))
 
 (defn main!
   [])
