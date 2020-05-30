@@ -5,4 +5,5 @@
                 :modules {:main {:init-fn guima.web-app/main!}}}}
  :dependencies [[cljs-http "0.1.46"]
                 [binaryage/devtools "0.9.11"]
-                [cider/cider-nrepl "0.25.0"]]}
+                [cider/cider-nrepl "0.25.0"]
+                [com.fulcrologic/fulcro "3.2.9"]]}
