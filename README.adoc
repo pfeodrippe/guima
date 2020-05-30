@@ -1,15 +1,26 @@
 = TLA+ Web Repl
 
-It runs a server to run TLA+/TLC expressions, very experimental, try it at ...
+It runs a server to run TLA+/TLC expressions, very experimental, try it at
+https://guima.cloud.
+
 
 == Brainstorm
 
 The main idea is to minimally introduce TLA+ concepts and operators. But for now,
 the user will see a list of operators and try to use them (maybe exercises?).
 
+
 == Ideas taken/inspired from
-- https://github.com/will62794/tlaplus_repl, mainly the string to make the REPL
-happen, thanks!
-- https://github.com/tlaplus/PlusPy, well, we call this project to eval the
-expressions, obrigado!
-- https://github.com/mhuebert/maria, awesome editor UI, gracias!
+- https://github.com/tlaplus/PlusPy, well, we call this project to eval every
+expression, obrigado!
+- https://github.com/will62794/tlaplus_repl,
+- https://maria.cloud, awesome editor, guima.cloud UI is heavily
+inspired by it, gracias!
+
+
+.Todo/Wish List
+* [ ] Add comments (with edition) between code
+* [ ] Act as a proxy for `learntla.com` website code. As an example, for
+https://learntla.com/tla/sets/, the user could use https://learntla.guima.cloud/tla/sets/
+and everything would stay the same, except you could evaluate the TLA+ code
+(like a chrome extension modifying your code).
