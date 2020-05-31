@@ -16,11 +16,11 @@
 
 #_(print (.-cm.CodeMirror js/Comment))
 
-#_(defn- json-parse
-    [s]
-    (js->clj (js/JSON.parse s) :keywordize-keys true))
+(defn- json-parse
+  [s]
+  (js->clj (js/JSON.parse s) :keywordize-keys true))
 
-#_(defn eval-handler
+(defn eval-handler
   [cm]
   (go (let [response (<! (http/post (str (.. js/window -location -origin) "/api/eval-tla-expression")
                                     {:json-params {:input (.getValue cm)}}))
@@ -39,11 +39,14 @@
 
 (defn add-code-mirror
   [parent]
-  (when (and parent (.. parent -parentNode))
-    (let [cm (CodeMirror. (fn [el]
-                            (.. parent -parentNode (replaceChild el parent)))
+  (when (and parent (.querySelector parent "#editor"))
+    (let [editor-div (.querySelector parent "#editor")
+          result-div (.querySelector parent "#result")
+          cm (CodeMirror. (fn [el]
+                            (.. parent (replaceChild el editor-div)))
                           (clj->js {:mode "ruby"
-                                    :viewportMargin js/Infinity}))]
+                                    :viewportMargin js/Infinity
+                                    :extraKeys {"Shift-Enter" eval-handler}}))]
       (doto cm
         (.setSize "50%" "auto")
         (.focus)
@@ -52,9 +55,15 @@
 (defsc Repl [this {:keys [:cm]}]
   {:initial-state (fn [_] {:cm 0})}
   (d/div {:id "code-and-result",
-          :style {:display "flex", :marginTop "20px", :fontSize "20px"}}
-    (d/div {:ref add-code-mirror})
-    (d/div)))
+          :style {:display "flex", :marginTop "20px", :fontSize "20px"}
+          :ref add-code-mirror}
+    (d/div :#editor)
+    (d/div {:id "result",
+            :style {:marginLeft "10px",
+                    :fontSize "100%",
+                    :alignSelf "center",
+                    :fontFamily "monospace",
+                    :width "50%"}})))
 
 (def ui-repl (comp/factory Repl))
 
