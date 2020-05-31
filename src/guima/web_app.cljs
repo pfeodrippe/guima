@@ -7,6 +7,7 @@
    [com.fulcrologic.fulcro.application :as app]
    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
    [com.fulcrologic.fulcro.dom :as d]
+   [guima.web-app.mutation :as api]
    ["codemirror/lib/codemirror" :as CodeMirror]
    ["codemirror/mode/ruby/ruby"]
    ["codemirror/addon/edit/closebrackets"]))
@@ -46,15 +47,28 @@
                             (.. parent (replaceChild el editor-div)))
                           (clj->js {:mode "ruby"
                                     :viewportMargin js/Infinity
-                                    :extraKeys {"Shift-Enter" eval-handler}}))]
+                                    #_ #_:extraKeys {"Shift-Enter" eval-handler
+                                                "Ctrl-Enter" eval-handler}}))]
       (doto cm
         (.setSize "50%" "auto")
         (.focus)
         (.setOption "autoCloseBrackets" true)))))
 
-(defsc Repl [this {:keys [:cm]}]
-  {:initial-state (fn [_] {:cm 0})}
+(defsc Repl [this {:keys [:repl/id]} {:keys [:on-create]}]
+  {:query [:repl/id]
+   :ident (fn [] [:repl/id id])
+   :initial-state (fn [{:keys [:repl/id]}] {:repl/id id})}
   (d/div {:id "code-and-result",
+          :onKeyDown (fn [evt]
+                       (log evt)
+                       (cond
+                         (and (.-ctrlKey evt) (= (.-keyCode evt) 13))
+                         (do (log "OLA") (.preventDefault evt))
+
+                         (and (.-altKey evt) (= (.-keyCode evt) 13))
+                         (on-create id)
+
+                         :else evt))
           :style {:display "flex", :marginTop "20px", :fontSize "20px"}
           :ref add-code-mirror}
     (d/div :#editor)
@@ -65,10 +79,11 @@
                     :fontFamily "monospace",
                     :width "50%"}})))
 
-(def ui-repl (comp/factory Repl))
+(def ui-repl (comp/computed-factory Repl {:keyfn :repl/id }))
 
-(defsc Root [this {:keys [:repl]}]
-  {:initial-state (fn [_] {:repl (comp/get-initial-state Repl {})})}
+(defsc Root [this {:keys [:list/repls]}]
+  {:query [{:list/repls (comp/get-query Repl)}]
+   :initial-state (fn [_] {:list/repls [(comp/get-initial-state Repl {:repl/id 0})]})}
   (d/div {}
     (d/div {:style {:display "flex"}}
       (d/div {:style {:display "flex",
@@ -78,7 +93,7 @@
                       :fontSize "14px",
                       :color "#666666"}}
         (d/b "Guima")
-        "| A TLA+ REPL")
+        (d/span "| A TLA+ REPL"))
       (d/div {:style {:display "flex",
                       :justifyContent "flex-end",
                       :width "100%",
@@ -91,7 +106,10 @@
                   :alt "Buy me a coffee"})
           (d/span {:style {:marginLeft "5px", :fontSize "19px !important"}}
             "Buy me a coffee"))))
-    (ui-repl repl)))
+    (let [on-create (fn [before-id]
+                      (comp/transact! this [(api/add-repl {:repl/id (count repls)
+                                                           :before-id before-id})]))]
+      (map #(ui-repl % {:on-create on-create}) repls))))
 
 (defn ^:export refresh
   "During development, shadow-cljs will call this on every hot reload of source. See shadow-cljs.edn"
