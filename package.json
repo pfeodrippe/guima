@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/pfeodrippe/guima#readme",
   "dependencies": {
+    "codemirror": "^5.54.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "shadow-cljs": "^2.9.10"
