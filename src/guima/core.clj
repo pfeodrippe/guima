@@ -7,7 +7,9 @@
    [io.pedestal.http.route :as route]
    [jsonista.core :as json]
    [clojure.set :as set]
-   [clojure.java.io :as io])
+   [clojure.java.io :as io]
+   [guima.server.parser :as parser]
+   [pathom.pedestal :refer [pathom-routes]])
   (:import
    (java.util Base64))
   (:gen-class))
@@ -151,11 +153,13 @@ Spec == Init
 
 (def routes
   (route/expand-routes
-   #{["/" :get main-page :route-name :main-page]
-     ["/editor" :get editor :route-name :editor]
-     ["/health-check" :get health-check :route-name :health-check]
-     ["/api" :post pathom-api :route-name :pathom-api]
-     ["/api/eval-tla-expression" :post eval-tla-expression :route-name :eval-tla-expression]}))
+   (set/union
+    #{["/" :get main-page :route-name :main-page]
+      ["/editor" :get editor :route-name :editor]
+      ["/health-check" :get health-check :route-name :health-check]
+      #_["/api" :post pathom-api :route-name :pathom-api]
+      ["/api/eval-tla-expression" :post eval-tla-expression :route-name :eval-tla-expression]}
+    (pathom-routes {:pathom-viz? true :parser parser/pathom-parser :pathom-url "/api"}))))
 
 (defn decode [to-decode]
   (String. (.decode (Base64/getDecoder) to-decode)))
