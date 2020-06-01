@@ -68,7 +68,7 @@
                        (cond
                          (or (and (.-ctrlKey evt)  (= (.-keyCode evt) 13))
                              (and (.-shiftKey evt) (= (.-keyCode evt) 13)))
-                         (comp/transact! this [(api/eval-tla-expression {:a 2})])
+                         (comp/transact! this [(api/eval-tla-expression {:input "1 + 2"})])
 
                          (and (.-altKey evt) (= (.-keyCode evt) 13))
                          (on-create id)
