@@ -59,12 +59,27 @@
     (.focus editor))
   (d/div {:id "code-and-result",
           :onKeyDown (fn [evt]
+                       ;; keycode 13 - Enter
+                       ;; keycode 38 - ArrowUp
+                       ;; keycode 40 - ArrowDown
+                       (log (.-keyCode evt))
                        (cond
                          (and (.-ctrlKey evt) (= (.-keyCode evt) 13))
                          (.preventDefault evt)
 
                          (and (.-altKey evt) (= (.-keyCode evt) 13))
                          (on-create id)
+
+                         (and (= (.-keyCode evt) 38)
+                              (zero? (.. editor getCursor -line))
+                              (zero? (.. editor getCursor -ch)))
+                         (comp/transact! this [(api/focus-at-previous-repl
+                                                {:repl/id id})])
+
+                         (and (= (.-keyCode evt) 40)
+                              (= (.. editor lastLine) (.. editor getCursor -line)))
+                         (comp/transact! this [(api/focus-at-next-repl
+                                                {:repl/id id})])
 
                          :else evt))
           :style {:display "flex", :marginTop "20px", :fontSize "20px"}
@@ -73,7 +88,7 @@
                    (let [cm (add-code-mirror ref)]
                      (.on cm "beforeChange"
                           (fn [cm evt]
-                            (when (and (not= id 0)
+                            (when (and (not (zero? id))
                                        (empty? (.getValue cm))
                                        (zero? (.. evt -to -line))
                                        (zero? (.. evt -to -ch))
@@ -95,7 +110,7 @@
 (defsc Root [this {:keys [:list/repls :root/unique-id]}]
   {:query [{:list/repls (comp/get-query Repl)} :root/unique-id]
    :initial-state (fn [_] {:list/repls [(comp/get-initial-state Repl {:repl/id 0})]
-                           :root/unique-id 1})}
+                           :root/unique-id 0})}
   (d/div {}
     (d/div {:style {:display "flex"}}
       (d/div {:style {:display "flex",
@@ -119,8 +134,7 @@
           (d/span {:style {:marginLeft "5px", :fontSize "19px !important"}}
             "Buy me a coffee"))))
     (let [on-create (fn [before-id]
-                      (comp/transact! this [(api/add-repl {:repl/id unique-id
-                                                           :before-id before-id})]))
+                      (comp/transact! this [(api/add-repl {:before-id before-id})]))
           on-delete (fn [id] (comp/transact! this [(api/delete-repl {:repl/id id })]))]
       (map #(ui-repl % {:on-create on-create :on-delete on-delete}) repls))))
 
