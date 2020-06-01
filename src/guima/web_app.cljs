@@ -12,11 +12,6 @@
    ["codemirror/mode/ruby/ruby"]
    ["codemirror/addon/edit/closebrackets"]))
 
-#_(print )
-#_(cm)
-
-#_(print (.-cm.CodeMirror js/Comment))
-
 (defn- json-parse
   [s]
   (js->clj (js/JSON.parse s) :keywordize-keys true))
