@@ -8,6 +8,7 @@
    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
    [com.fulcrologic.fulcro.dom :as d]
    [guima.web-app.mutation :as api]
+   [com.fulcrologic.fulcro.networking.http-remote :as http-remote]
    ["codemirror/lib/codemirror" :as CodeMirror]
    ["codemirror/mode/ruby/ruby"]
    ["codemirror/addon/edit/closebrackets"]))
@@ -31,7 +32,8 @@
 
 (def log js/console.log)
 
-(defonce app (app/fulcro-app))
+(defonce app (app/fulcro-app
+              {:remotes {:remote (http-remote/fulcro-http-remote {})}}))
 
 (defn add-code-mirror
   [parent]
@@ -64,8 +66,9 @@
                        ;; keycode 40 - ArrowDown
                        (log (.-keyCode evt))
                        (cond
-                         (and (.-ctrlKey evt) (= (.-keyCode evt) 13))
-                         (.preventDefault evt)
+                         (or (and (.-ctrlKey evt)  (= (.-keyCode evt) 13))
+                             (and (.-shiftKey evt) (= (.-keyCode evt) 13)))
+                         (comp/transact! this [(api/eval-tla-expression {:a 2})])
 
                          (and (.-altKey evt) (= (.-keyCode evt) 13))
                          (on-create id)

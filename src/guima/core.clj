@@ -144,11 +144,17 @@ Spec == Init
     (fn [context]
       (assoc context :response {:status 200 :body ""}))}])
 
+(def pathom-api
+  [{:enter
+    (fn [context]
+      (assoc context :response {:status 200 :body ""}))}])
+
 (def routes
   (route/expand-routes
    #{["/" :get main-page :route-name :main-page]
      ["/editor" :get editor :route-name :editor]
      ["/health-check" :get health-check :route-name :health-check]
+     ["/api" :post pathom-api :route-name :pathom-api]
      ["/api/eval-tla-expression" :post eval-tla-expression :route-name :eval-tla-expression]}))
 
 (defn decode [to-decode]

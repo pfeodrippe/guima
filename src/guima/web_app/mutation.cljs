@@ -79,3 +79,16 @@
                           remove-all-focus
                           (update-in [:repl/id next-id] assoc :repl/focus true))
                       %)))))
+
+(defmutation eval-tla-expression
+  [{:keys [:repl/id]}]
+  (action [{:keys [:state]}]
+    (println :AAA>>>)
+    state
+    #_(swap! state #(let [next-id (get-next-id % id)]
+                      (if next-id
+                        (-> %
+                            remove-all-focus
+                            (update-in [:repl/id next-id] assoc :repl/focus true))
+                        %))))
+  (remote [env] true))
