@@ -1,10 +1,11 @@
 (ns guima.server.parser
   (:require
    [com.wsscode.pathom.core :as p]
+   [guima.handler.mutation :as mutation]
    [guima.server.resolver :as resolver]
    [com.wsscode.pathom.connect :as pc]))
 
-(def resolvers [resolver/resolvers])
+(def resolvers [resolver/resolvers mutation/mutations])
 
 (def pathom-parser
   (p/parser {::p/env     {::p/reader                 [p/map-reader

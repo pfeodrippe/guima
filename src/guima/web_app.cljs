@@ -7,7 +7,7 @@
    [com.fulcrologic.fulcro.application :as app]
    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
    [com.fulcrologic.fulcro.dom :as d]
-   [guima.web-app.mutation :as api]
+   [guima.handler.mutation :as api]
    [com.fulcrologic.fulcro.networking.http-remote :as http-remote]
    ["codemirror/lib/codemirror" :as CodeMirror]
    ["codemirror/mode/ruby/ruby"]
