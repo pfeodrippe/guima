@@ -93,7 +93,7 @@
                     :fontSize "100%",
                     :alignSelf "center"
                     :fontFamily "monospace",
-                    :width "50"
+                    :width "50%"
                     :color (if result-error? "#CC0000" "#333333")}}
       result)))
 
