@@ -50,7 +50,6 @@
                        ;; keycode 13 - Enter
                        ;; keycode 38 - ArrowUp
                        ;; keycode 40 - ArrowDown
-                       (log (.-keyCode evt))
                        (cond
                          (or (and (.-ctrlKey evt)  (= (.-keyCode evt) 13))
                              (and (.-shiftKey evt) (= (.-keyCode evt) 13)))
@@ -85,6 +84,9 @@
                                        (zero? (.. evt -to -ch))
                                        (= (.. evt -origin) "+delete"))
                               (comp/transact! this [(api/delete-repl {:repl/id id})]))))
+                     (.on cm "focus"
+                          (fn [_cm _evt]
+                            (comp/transact! this [(api/focus {:repl/id id})])))
                      (comp/transact! this [(api/add-repl-editor
                                             {:repl/id id
                                              :repl/editor cm})]))))}

@@ -71,6 +71,13 @@
                           (update-in [:repl/id previous-id] assoc :repl/focus true))
                       %)))))
 
+(defmutation focus
+  [{:keys [:repl/id]}]
+  (action [{:keys [:state]}]
+    (swap! state #(-> %
+                      remove-all-focus
+                      (update-in [:repl/id id] assoc :repl/focus true)))))
+
 (defmutation focus-at-next-repl
   [{:keys [:repl/id]}]
   (action [{:keys [:state]}]
@@ -90,15 +97,6 @@
 
 (defmutation eval-tla-expression
   [{:keys [:repl/id]}]
-  #_(action [{:keys [:state]}]
-      (println :AAA>>>)
-      state
-      #_(swap! state #(let [next-id (get-next-id % id)]
-                        (if next-id
-                          (-> %
-                              remove-all-focus
-                              (update-in [:repl/id next-id] assoc :repl/focus true))
-                          %))))
   (ok-action [{:keys [:app :result]}]
     (let [body (get-in result [:body `eval-tla-expression])]
       (if (:error body)
