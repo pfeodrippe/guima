@@ -13,23 +13,6 @@
    ["codemirror/mode/ruby/ruby"]
    ["codemirror/addon/edit/closebrackets"]))
 
-(defn- json-parse
-  [s]
-  (js->clj (js/JSON.parse s) :keywordize-keys true))
-
-(defn eval-handler
-  [cm]
-  (go (let [response (<! (http/post (str (.. js/window -location -origin) "/api/eval-tla-expression")
-                                    {:json-params {:input (.getValue cm)}}))
-            result-el (.. cm getWrapperElement -parentNode (querySelector "#result"))
-            body (json-parse (:body response))]
-        (if (= (:status response) 200)
-          (do (set! (.-color (.-style result-el)) "#333333")
-              (set! (.-innerHTML result-el) (:data body)))
-          (do (set! (.-color (.-style result-el)) "#cc0000")
-              (set! (.-innerHTML result-el)
-                    (get-in body [:error :message])))))))
-
 (def log js/console.log)
 
 (defonce app (app/fulcro-app
@@ -42,21 +25,24 @@
         cm (CodeMirror. (fn [el]
                           (.. parent (replaceChild el editor-div)))
                         (clj->js {:mode "ruby"
-                                  :viewportMargin js/Infinity
-                                  #_ #_:extraKeys {"Shift-Enter" eval-handler
-                                                   "Ctrl-Enter" eval-handler}}))]
+                                  :viewportMargin js/Infinity}))]
     (doto cm
       (.setSize "50%" "auto")
-      #_(.focus)
       (.setOption "autoCloseBrackets" true))))
 
 ;; Creates a new Repl component.
 ;; `0` is the initial id.
-(defsc Repl [this {:keys [:repl/id :repl/editor :repl/focus]} {:keys [:on-create :on-delete]}]
-  {:query [:repl/id :repl/editor :repl/focus]
+(defsc Repl [this
+             {:keys [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error?]}
+             {:keys [:on-create :on-delete]}]
+  {:query [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error?]
    :ident (fn [] [:repl/id id])
    :initial-state (fn [{:keys [:repl/id]}]
-                    {:repl/id id :repl/editor nil :repl/focus false})}
+                    {:repl/id id
+                     :repl/editor nil
+                     :repl/focus false
+                     :repl/result ""
+                     :repl/result-error? false})}
   (when focus
     (.focus editor))
   (d/div {:id "code-and-result",
@@ -68,7 +54,9 @@
                        (cond
                          (or (and (.-ctrlKey evt)  (= (.-keyCode evt) 13))
                              (and (.-shiftKey evt) (= (.-keyCode evt) 13)))
-                         (comp/transact! this [(api/eval-tla-expression {:input "1 + 2"})])
+                         (comp/transact! this [(api/eval-tla-expression
+                                                {:repl/id id
+                                                 :input (.getValue editor)})])
 
                          (and (.-altKey evt) (= (.-keyCode evt) 13))
                          (on-create id)
@@ -101,12 +89,13 @@
                                             {:repl/id id
                                              :repl/editor cm})]))))}
     (d/div :#editor)
-    (d/div {:id "result",
-            :style {:marginLeft "10px",
+    (d/div {:style {:marginLeft "10px",
                     :fontSize "100%",
-                    :alignSelf "center",
+                    :alignSelf "center"
                     :fontFamily "monospace",
-                    :width "50%"}})))
+                    :width "50"
+                    :color (if result-error? "#CC0000" "#333333")}}
+      result)))
 
 (def ui-repl (comp/computed-factory Repl {:keyfn :repl/id }))
 

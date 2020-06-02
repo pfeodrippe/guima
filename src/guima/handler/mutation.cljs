@@ -1,5 +1,6 @@
 (ns guima.handler.mutation
   (:require
+   [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
    [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
    [com.fulcrologic.fulcro.algorithms.merge :as merge]))
 
@@ -80,15 +81,31 @@
                           (update-in [:repl/id next-id] assoc :repl/focus true))
                       %)))))
 
+(defmutation update-result
+  [{:keys [:repl/id :repl/result :repl/result-error?]}]
+  (action [{:keys [:state]}]
+    (swap! state update-in [:repl/id id] assoc
+           :repl/result result
+           :repl/result-error? result-error?)))
+
 (defmutation eval-tla-expression
   [{:keys [:repl/id]}]
-  (action [{:keys [:state]}]
-    (println :AAA>>>)
-    state
-    #_(swap! state #(let [next-id (get-next-id % id)]
-                      (if next-id
-                        (-> %
-                            remove-all-focus
-                            (update-in [:repl/id next-id] assoc :repl/focus true))
-                        %))))
+  #_(action [{:keys [:state]}]
+      (println :AAA>>>)
+      state
+      #_(swap! state #(let [next-id (get-next-id % id)]
+                        (if next-id
+                          (-> %
+                              remove-all-focus
+                              (update-in [:repl/id next-id] assoc :repl/focus true))
+                          %))))
+  (ok-action [{:keys [:app :result]}]
+    (let [body (get-in result [:body `eval-tla-expression])]
+      (if (:error body)
+        (comp/transact! app [(update-result {:repl/id id
+                                             :repl/result (get-in body [:error :message])
+                                             :repl/result-error? true})])
+        (comp/transact! app [(update-result {:repl/id id
+                                             :repl/result (:data body)
+                                             :repl/result-error? false})]))))
   (remote [env] true))
