@@ -45,58 +45,57 @@
                      :repl/result-error? false})}
   (when focus
     (.focus editor))
-  (d/div {:id "code-and-result",
-          :onKeyDown (fn [evt]
-                       ;; keycode 13 - Enter
-                       ;; keycode 38 - ArrowUp
-                       ;; keycode 40 - ArrowDown
-                       (cond
-                         (or (and (.-ctrlKey evt)  (= (.-keyCode evt) 13))
-                             (and (.-shiftKey evt) (= (.-keyCode evt) 13)))
-                         (comp/transact! this [(api/eval-tla-expression
-                                                {:repl/id id
-                                                 :input (.getValue editor)})])
+  (d/div :.flex.mt-10.text-2xl
+    {:id "code-and-result",
+     :onKeyDown (fn [evt]
+                  ;; keycode 13 - Enter
+                  ;; keycode 38 - ArrowUp
+                  ;; keycode 40 - ArrowDown
+                  (cond
+                    (or (and (.-ctrlKey evt)  (= (.-keyCode evt) 13))
+                        (and (.-shiftKey evt) (= (.-keyCode evt) 13)))
+                    (comp/transact! this [(api/eval-tla-expression
+                                           {:repl/id id
+                                            :input (.getValue editor)})])
 
-                         (and (.-altKey evt) (= (.-keyCode evt) 13))
-                         (on-create id)
+                    (and (.-altKey evt) (= (.-keyCode evt) 13))
+                    (on-create id)
 
-                         (and (= (.-keyCode evt) 38)
-                              (zero? (.. editor getCursor -line))
-                              (zero? (.. editor getCursor -ch)))
-                         (comp/transact! this [(api/focus-at-previous-repl
-                                                {:repl/id id})])
+                    (and (= (.-keyCode evt) 38)
+                         (zero? (.. editor getCursor -line))
+                         (zero? (.. editor getCursor -ch)))
+                    (comp/transact! this [(api/focus-at-previous-repl
+                                           {:repl/id id})])
 
-                         (and (= (.-keyCode evt) 40)
-                              (= (.. editor lastLine) (.. editor getCursor -line)))
-                         (comp/transact! this [(api/focus-at-next-repl
-                                                {:repl/id id})])
+                    (and (= (.-keyCode evt) 40)
+                         (= (.. editor lastLine) (.. editor getCursor -line)))
+                    (comp/transact! this [(api/focus-at-next-repl
+                                           {:repl/id id})])
 
-                         :else evt))
-          :style {:display "flex", :marginTop "20px", :fontSize "20px"}
-          :ref (fn [ref]
-                 (when (and ref (.querySelector ref "#editor"))
-                   (let [cm (add-code-mirror ref)]
-                     (.on cm "beforeChange"
-                          (fn [cm evt]
-                            (when (and (not (zero? id))
-                                       (empty? (.getValue cm))
-                                       (zero? (.. evt -to -line))
-                                       (zero? (.. evt -to -ch))
-                                       (= (.. evt -origin) "+delete"))
-                              (comp/transact! this [(api/delete-repl {:repl/id id})]))))
-                     (.on cm "focus"
-                          (fn [_cm _evt]
-                            (comp/transact! this [(api/focus {:repl/id id})])))
-                     (comp/transact! this [(api/add-repl-editor
-                                            {:repl/id id
-                                             :repl/editor cm})]))))}
-    (d/div :#editor)
-    (d/div {:style {:marginLeft "10px",
-                    :fontSize "100%",
-                    :alignSelf "center"
-                    :fontFamily "monospace",
-                    :width "50%"
-                    :color (if result-error? "#CC0000" "#333333")}}
+                    :else evt))
+     :ref (fn [ref]
+            (when (and ref (.querySelector ref "#editor"))
+              (let [cm (add-code-mirror ref)]
+                (.on cm "beforeChange"
+                     (fn [cm evt]
+                       (when (and (not (zero? id))
+                                  (empty? (.getValue cm))
+                                  (zero? (.. evt -to -line))
+                                  (zero? (.. evt -to -ch))
+                                  (= (.. evt -origin) "+delete"))
+                         (comp/transact! this [(api/delete-repl {:repl/id id})]))))
+                (.on cm "focus"
+                     (fn [_cm _evt]
+                       (comp/transact! this [(api/focus {:repl/id id})])))
+                (comp/transact! this [(api/add-repl-editor
+                                       {:repl/id id
+                                        :repl/editor cm})]))))}
+    (d/div :#editor
+      {:classes ["w-2/4"]})
+    (d/div :.ml-5.text-2xl.self-center
+      {:style {:color (if result-error? "#CC0000" "#333333")
+               :fontFamily "monospace"}
+       :classes ["w-2/4"]}
       result)))
 
 (def ui-repl (comp/computed-factory Repl {:keyfn :repl/id }))
@@ -105,28 +104,19 @@
   {:query [{:list/repls (comp/get-query Repl)} :root/unique-id]
    :initial-state (fn [_] {:list/repls [(comp/get-initial-state Repl {:repl/id 0})]
                            :root/unique-id 0})}
-  (d/div {}
-    (d/div {:style {:display "flex"}}
-      (d/div {:style {:display "flex",
-                      :justifyContent "flex-start",
-                      :width "100%",
-                      :padding "10px 15px 7px 10px",
-                      :fontSize "14px",
-                      :color "#666666"}}
+  (d/div
+    (d/div :.flex
+      (d/div :.justify-start.w-full.py-3.px-3.text-sm
         (d/b "Guima")
-        (d/span "| A TLA+ REPL"))
-      (d/div {:style {:display "flex",
-                      :justifyContent "flex-end",
-                      :width "100%",
-                      :padding "0"}}
-        (d/a :.bmc-button
-          {:target "_blank",
-           :href "https://www.buymeacoffee.com/pfeodrippe",
-           :style {:transform "scale(0.5)"}}
-          (d/img {:src "https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg"
-                  :alt "Buy me a coffee"})
-          (d/span {:style {:marginLeft "5px", :fontSize "19px !important"}}
-            "Buy me a coffee"))))
+        (d/span " | A TLA+ REPL"))
+      (d/a :.bg-yellow-300.hover:bg-yellow-400.text-gray-800.font-bold.py-2.px-4.rounded.inline-flex.items-center
+        {:target "_blank",
+         :href "https://www.buymeacoffee.com/pfeodrippe",
+         :style {:transform "scale(0.7)"}}
+        (d/img {:src "https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg"
+                :alt "Buy me a coffee"})
+        (d/span :.ml-5
+          "Buy me a coffee")))
     (let [on-create (fn [before-id]
                       (comp/transact! this [(api/add-repl {:before-id before-id})]))
           on-delete (fn [id] (comp/transact! this [(api/delete-repl {:repl/id id })]))]

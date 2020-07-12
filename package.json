@@ -1,28 +1,29 @@
 {
-  "name": "guima",
-  "version": "1.0.0",
-  "description": "= TLA+ Web Repl",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/pfeodrippe/guima.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/pfeodrippe/guima/issues"
-  },
-  "homepage": "https://github.com/pfeodrippe/guima#readme",
-  "dependencies": {
-    "codemirror": "^5.54.0",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-    "shadow-cljs": "^2.9.10"
-  }
+    "name": "guima",
+    "version": "1.0.0",
+    "description": "= TLA+ Web Repl",
+    "main": "index.js",
+    "directories": {
+        "lib": "lib"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/pfeodrippe/guima.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/pfeodrippe/guima/issues"
+    },
+    "homepage": "https://github.com/pfeodrippe/guima#readme",
+    "dependencies": {
+        "codemirror": "^5.54.0",
+        "react": "^16.13.1",
+        "react-dom": "^16.13.1",
+        "shadow-cljs": "^2.9.10",
+        "tailwindcss": "^1.4.6"
+    }
 }
