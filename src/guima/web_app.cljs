@@ -119,7 +119,7 @@
                                                                 Repl (assoc s :repl/id idx))))
                                                 vec)
                                        [(comp/get-initial-state Repl {:repl/id 0})])
-                       :root/unique-id 0}))}
+                       :root/unique-id (count (:list/repls initial-state))}))}
   (d/div
     (d/div :.flex
       (d/div :.justify-start.w-full.py-3.px-3.text-sm
@@ -127,8 +127,10 @@
         (d/span " | A TLA+ REPL"))
       (d/a :.bg-red-300.hover:bg-red-400.text-gray-800.font-bold.py-2.px-4.rounded.inline-flex.items-center
         {:target "_blank",
+         :href "_blank"
          :style {:transform "scale(0.9)"}
-         :onClick (fn [_]
+         :onClick (fn [e]
+                    (.preventDefault e)
                     (let [state {:list/repls (->> repls
                                                   (filter :repl/editor)
                                                   (mapv #(select-keys % [:repl/code])))}
