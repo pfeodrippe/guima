@@ -2,6 +2,8 @@
   (:require-macros
    [cljs.core.async.macros :refer [go]])
   (:require
+   [cemerick.url :as url]
+   [clojure.edn :as edn]
    [cljs-http.client :as http]
    [cljs.core.async :refer [<!]]
    [com.fulcrologic.fulcro.application :as app]
@@ -33,16 +35,18 @@
 ;; Creates a new Repl component.
 ;; `0` is the initial id.
 (defsc Repl [this
-             {:keys [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error?]}
+             {:keys [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error? :repl/code]}
              {:keys [:on-create :on-delete]}]
-  {:query [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error?]
+  {:query [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error? :repl/code]
    :ident (fn [] [:repl/id id])
-   :initial-state (fn [{:keys [:repl/id]}]
+   :initial-state (fn [{:keys [:repl/id :repl/code]
+                        :or {code ""}}]
                     {:repl/id id
                      :repl/editor nil
                      :repl/focus false
                      :repl/result ""
-                     :repl/result-error? false})}
+                     :repl/result-error? false
+                     :repl/code code})}
   (when focus
     (.focus editor))
   (d/div :.flex.mt-10.text-2xl
@@ -56,7 +60,7 @@
                         (and (.-shiftKey evt) (= (.-keyCode evt) 13)))
                     (comp/transact! this [(api/eval-tla-expression
                                            {:repl/id id
-                                            :input (.getValue editor)})])
+                                            :input code})])
 
                     (and (.-altKey evt) (= (.-keyCode evt) 13))
                     (on-create id)
@@ -72,7 +76,9 @@
                     (comp/transact! this [(api/focus-at-next-repl
                                            {:repl/id id})])
 
-                    :else evt))
+                    :else (comp/transact! this [(api/update-repl-code
+                                                 {:repl/id id
+                                                  :repl/code (.getValue editor)})])))
      :ref (fn [ref]
             (when (and ref (.querySelector ref "#editor"))
               (let [cm (add-code-mirror ref)]
@@ -87,6 +93,7 @@
                 (.on cm "focus"
                      (fn [_cm _evt]
                        (comp/transact! this [(api/focus {:repl/id id})])))
+                (when code (.setValue cm code))
                 (comp/transact! this [(api/add-repl-editor
                                        {:repl/id id
                                         :repl/editor cm})]))))}
@@ -98,12 +105,21 @@
        :classes ["w-2/4"]}
       result)))
 
-(def ui-repl (comp/computed-factory Repl {:keyfn :repl/id }))
+(def ui-repl (comp/computed-factory Repl {:keyfn :repl/id}))
 
 (defsc Root [this {:keys [:list/repls :root/unique-id]}]
   {:query [{:list/repls (comp/get-query Repl)} :root/unique-id]
-   :initial-state (fn [_] {:list/repls [(comp/get-initial-state Repl {:repl/id 0})]
-                           :root/unique-id 0})}
+   :initial-state (fn [_]
+                    (let [initial-state (some-> js/window .-location .-href
+                                                url/url :query (get "state")
+                                                js/atob edn/read-string)]
+                      {:list/repls (or (some->> (:list/repls initial-state)
+                                                (map-indexed (fn [idx s]
+                                                               (comp/get-initial-state
+                                                                Repl (assoc s :repl/id idx))))
+                                                vec)
+                                       [(comp/get-initial-state Repl {:repl/id 0})])
+                       :root/unique-id 0}))}
   (d/div
     (d/div :.flex
       (d/div :.justify-start.w-full.py-3.px-3.text-sm
@@ -133,3 +149,62 @@
   []
   (app/mount! app Root "app")
   (js/console.log "Loaded"))
+
+(comment
+
+  {0
+   {:repl/id 0,
+    :repl/editor "UnknownTransitType: [object Object]",
+    :repl/focus true,
+    :repl/result "",
+    :repl/result-error? false,
+    :repl/code ""},
+   1 {:repl/code "", :repl/focus false}}
+
+  (hash {0
+         {:repl/id 0,
+          :repl/editor "UnknownTransitType: [object Object]",
+          :repl/focus true,
+          :repl/result "",
+          :repl/result-error? false,
+          :repl/code ""},
+         1 {:repl/code "", :repl/focus false}})
+
+  (= {0
+      {:repl/id 0,
+       :repl/editor "UnknownTransitType: [object Object]",
+       :repl/focus true,
+       :repl/result "",
+       :repl/result-error? false,
+       :repl/code ""},
+      1 {:repl/code "", :repl/focus false}}
+     (-> {0
+          {:repl/id 0,
+           :repl/editor "UnknownTransitType: [object Object]",
+           :repl/focus true,
+           :repl/result "",
+           :repl/result-error? false,
+           :repl/code ""},
+          1 {:repl/code "", :repl/focus false}}
+         js/btoa
+         js/atob
+         edn/read-string))
+
+  (->> {:list/repls
+        (->> (vals
+              {0
+               {:repl/id 0,
+                :repl/editor "UnknownTransitType: [object Object]",
+                :repl/focus true,
+                :repl/result "",
+                :repl/result-error? false,
+                :repl/code "1 + 2"},
+               1 {:repl/code "", :repl/focus false}})
+             (filter :repl/editor)
+             (mapv #(select-keys % [:repl/code])))}
+       pr-str
+       js/btoa)
+
+  "http://localhost:8080/editor?state=ezpsaXN0L3JlcGxzIFt7OnJlcGwvY29kZSAiMSArIDIifV19"
+
+  ())

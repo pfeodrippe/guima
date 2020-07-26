@@ -88,7 +88,13 @@
                           (update-in [:repl/id next-id] assoc :repl/focus true))
                       %)))))
 
-(defmutation update-result
+(defmutation update-repl-code
+  [{:keys [:repl/id :repl/code]}]
+  (action [{:keys [:state]}]
+    (swap! state update-in [:repl/id id] assoc
+           :repl/code code)))
+
+(defmutation update-repl-result
   [{:keys [:repl/id :repl/result :repl/result-error?]}]
   (action [{:keys [:state]}]
     (swap! state update-in [:repl/id id] assoc
@@ -100,10 +106,10 @@
   (ok-action [{:keys [:app :result]}]
     (let [body (get-in result [:body `eval-tla-expression])]
       (if (:error body)
-        (comp/transact! app [(update-result {:repl/id id
-                                             :repl/result (get-in body [:error :message])
-                                             :repl/result-error? true})])
-        (comp/transact! app [(update-result {:repl/id id
-                                             :repl/result (:data body)
-                                             :repl/result-error? false})]))))
+        (comp/transact! app [(update-repl-result {:repl/id id
+                                                  :repl/result (get-in body [:error :message])
+                                                  :repl/result-error? true})])
+        (comp/transact! app [(update-repl-result {:repl/id id
+                                                  :repl/result (:data body)
+                                                  :repl/result-error? false})]))))
   (remote [env] true))

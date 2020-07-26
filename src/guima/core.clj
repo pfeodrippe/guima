@@ -45,11 +45,6 @@
       ["/health-check" :get health-check :route-name :health-check]}
     (pathom-routes {:pathom-viz? true :parser parser/pathom-parser :pathom-url "/api"}))))
 
-(defn decode [to-decode]
-  (String. (.decode (Base64/getDecoder) to-decode)))
-
-;; Use `btoa` at javascript and `decode` here
-
 (defn create-server [env]
   (http/create-server
    (-> {::http/routes routes
