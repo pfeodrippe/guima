@@ -110,9 +110,9 @@
 (defsc Root [this {:keys [:list/repls :root/unique-id]}]
   {:query [{:list/repls (comp/get-query Repl)} :root/unique-id]
    :initial-state (fn [_]
-                    (let [initial-state (some-> js/window .-location .-href
-                                                url/url :query (get "state")
-                                                js/atob edn/read-string)]
+                    (let [b64-state (some-> js/window .-location .-href
+                                            url/url :query (get "state"))
+                          initial-state (some-> b64-state js/atob edn/read-string)]
                       {:list/repls (or (some->> (:list/repls initial-state)
                                                 (map-indexed (fn [idx s]
                                                                (comp/get-initial-state
@@ -125,10 +125,26 @@
       (d/div :.justify-start.w-full.py-3.px-3.text-sm
         (d/b "Guima")
         (d/span " | A TLA+ REPL"))
+      (d/a :.bg-red-300.hover:bg-red-400.text-gray-800.font-bold.py-2.px-4.rounded.inline-flex.items-center
+        {:target "_blank",
+         :style {:transform "scale(0.9)"}
+         :onClick (fn [_]
+                    (let [state {:list/repls (->> repls
+                                                  (filter :repl/editor)
+                                                  (mapv #(select-keys % [:repl/code])))}
+                          clip-url (str (-> js/window .-location .-href
+                                            url/url (assoc :query {}))
+                                        "?state="
+                                        (-> state pr-str js/btoa))]
+                      (.. js/navigator -clipboard (writeText clip-url))))}
+        (d/span
+          "🔗")
+        (d/span :.ml-5
+          "Share"))
       (d/a :.bg-yellow-300.hover:bg-yellow-400.text-gray-800.font-bold.py-2.px-4.rounded.inline-flex.items-center
         {:target "_blank",
          :href "https://www.buymeacoffee.com/pfeodrippe",
-         :style {:transform "scale(0.7)"}}
+         :style {:transform "scale(0.9)"}}
         (d/img {:src "https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg"
                 :alt "Buy me a coffee"})
         (d/span :.ml-5
