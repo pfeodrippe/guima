@@ -18,7 +18,7 @@
             (if (= old-id id)
               (reduced previous-id)
               old-id))
-          nil (:block/repls s)))
+          nil (:block/blocks s)))
 
 (defn- get-next-id
   [s id]
@@ -26,7 +26,7 @@
             (if (= old-id id)
               (reduced next-id)
               old-id))
-          nil (reverse (:block/repls s))))
+          nil (reverse (:block/blocks s))))
 
 (defmutation add-repl
   [{:keys [:before-id]}]
@@ -38,10 +38,10 @@
                                             (if (= old-id before-id)
                                               (conj acc [ident old-id] [:repl/id id])
                                               (conj acc [ident old-id])))
-                                          [] (:block/repls s))]
+                                          [] (:block/blocks s))]
                      (-> s
                          (assoc-in [:repl/id id] {:repl/id id})
-                         (assoc :block/repls new-list)
+                         (assoc :block/blocks new-list)
                          (assoc :root/unique-id id)))))))
 
 (defmutation add-repl-editor
@@ -59,7 +59,7 @@
                         remove-all-focus
                         (update :repl/id dissoc id)
                         (update-in [:repl/id previous-id] assoc :repl/focus true)
-                        (merge/remove-ident* [:repl/id id] [:block/repls]))))))
+                        (merge/remove-ident* [:repl/id id] [:block/blocks]))))))
 
 (defmutation focus-at-previous-repl
   [{:keys [:repl/id]}]

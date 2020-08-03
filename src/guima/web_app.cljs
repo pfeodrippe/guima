@@ -32,8 +32,6 @@
       (.setSize "50%" "auto")
       (.setOption "autoCloseBrackets" true))))
 
-;; Creates a new Repl component.
-;; `0` is the initial id.
 (defsc Repl [this
              {:keys [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error? :repl/code]}
              {:keys [:on-create :on-delete]}]
@@ -107,19 +105,19 @@
 
 (def ui-repl (comp/computed-factory Repl {:keyfn :repl/id}))
 
-(defsc Root [this {:keys [:block/repls :root/unique-id]}]
-  {:query [{:block/repls (comp/get-query Repl)} :root/unique-id]
+(defsc Root [this {:keys [:block/blocks :root/unique-id]}]
+  {:query [{:block/blocks (comp/get-query Repl)} :root/unique-id]
    :initial-state (fn [_]
                     (let [b64-state (some-> js/window .-location .-href
                                             url/url :query (get "state"))
                           initial-state (some-> b64-state js/atob edn/read-string)]
-                      {:block/repls (or (some->> (:block/repls initial-state)
+                      {:block/blocks (or (some->> (:block/blocks initial-state)
                                                 (map-indexed (fn [idx s]
                                                                (comp/get-initial-state
                                                                 Repl (assoc s :repl/id idx))))
                                                 vec)
                                        [(comp/get-initial-state Repl {:repl/id 0})])
-                       :root/unique-id (count (:block/repls initial-state))}))}
+                       :root/unique-id (count (:block/blocks initial-state))}))}
   (d/div
     (d/div :.flex
       (d/div :.justify-start.w-full.py-3.px-3.text-sm
@@ -131,9 +129,9 @@
          :style {:transform "scale(0.9)"}
          :onClick (fn [e]
                     (.preventDefault e)
-                    (let [state {:block/repls (->> repls
-                                                  (filter :repl/editor)
-                                                  (mapv #(select-keys % [:repl/code])))}
+                    (let [state {:block/blocks (->> blocks
+                                                    (filter :repl/editor)
+                                                    (mapv #(select-keys % [:repl/code])))}
                           clip-url (str (-> js/window .-location .-href
                                             url/url (assoc :query {}))
                                         "?state="
@@ -154,7 +152,7 @@
     (let [on-create (fn [before-id]
                       (comp/transact! this [(api/add-repl {:before-id before-id})]))
           on-delete (fn [id] (comp/transact! this [(api/delete-repl {:repl/id id })]))]
-      (map #(ui-repl % {:on-create on-create :on-delete on-delete}) repls))))
+      (map #(ui-repl % {:on-create on-create :on-delete on-delete}) blocks))))
 
 (defn ^:export refresh
   "During development, shadow-cljs will call this on every hot reload of source. See shadow-cljs.edn"
@@ -208,7 +206,7 @@
          js/atob
          edn/read-string))
 
-  (->> {:block/repls
+  (->> {:block/blocks
         (->> (vals
               {0
                {:repl/id 0,
