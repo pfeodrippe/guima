@@ -11,14 +11,18 @@
    [com.fulcrologic.fulcro.dom :as d]
    [guima.handler.mutation :as api]
    [com.fulcrologic.fulcro.networking.http-remote :as http-remote]
+   [com.fulcrologic.fulcro.algorithms.react-interop :as interop]
    ["codemirror/lib/codemirror" :as CodeMirror]
    ["codemirror/mode/ruby/ruby"]
-   ["codemirror/addon/edit/closebrackets"]))
+   ["codemirror/addon/edit/closebrackets"]
+   ["react-quill" :as ReactQuill]))
 
 (def log js/console.log)
 
 (defonce app (app/fulcro-app
               {:remotes {:remote (http-remote/fulcro-http-remote {})}}))
+
+(def ui-prose-editor (interop/react-factory ReactQuill))
 
 (defn add-code-mirror
   [parent]
@@ -134,61 +138,67 @@
     (.focus editor))
   (d/div :.flex.mt-10.text-2xl
     {:id "code-and-result",
-     :onKeyDown (fn [evt]
-                  ;; keycode 13 - Enter
-                  ;; keycode 38 - ArrowUp
-                  ;; keycode 40 - ArrowDown
-                  (cond
-                    (or (and (.-ctrlKey evt)  (= (.-keyCode evt) 13))
-                        (and (.-shiftKey evt) (= (.-keyCode evt) 13)))
-                    (comp/transact! this [(api/eval-tla-expression
-                                           {:repl/id id
-                                            :input code})])
+     #_ #_   :onKeyDown (fn [evt]
+                          ;; keycode 13 - Enter
+                          ;; keycode 38 - ArrowUp
+                          ;; keycode 40 - ArrowDown
+                          (cond
+                            (or (and (.-ctrlKey evt)  (= (.-keyCode evt) 13))
+                                (and (.-shiftKey evt) (= (.-keyCode evt) 13)))
+                            (comp/transact! this [(api/eval-tla-expression
+                                                   {:repl/id id
+                                                    :input code})])
 
-                    (and (.-altKey evt) (= (.-keyCode evt) 13))
-                    (on-create id)
+                            (and (.-altKey evt) (= (.-keyCode evt) 13))
+                            (on-create id)
 
-                    (and (= (.-keyCode evt) 38)
-                         (zero? (.. editor getCursor -line))
-                         (zero? (.. editor getCursor -ch)))
-                    (comp/transact! this [(api/focus-at-previous-repl
-                                           {:repl/id id})])
+                            (and (= (.-keyCode evt) 38)
+                                 (zero? (.. editor getCursor -line))
+                                 (zero? (.. editor getCursor -ch)))
+                            (comp/transact! this [(api/focus-at-previous-repl
+                                                   {:repl/id id})])
 
-                    (and (= (.-keyCode evt) 40)
-                         (= (.. editor lastLine) (.. editor getCursor -line)))
-                    (comp/transact! this [(api/focus-at-next-repl
-                                           {:repl/id id})])
+                            (and (= (.-keyCode evt) 40)
+                                 (= (.. editor lastLine) (.. editor getCursor -line)))
+                            (comp/transact! this [(api/focus-at-next-repl
+                                                   {:repl/id id})])
 
-                    :else (comp/transact! this [(api/update-repl-code
-                                                 {:repl/id id
-                                                  :repl/code (.getValue editor)})])))
-     :ref (fn [ref]
-            (when (and ref (.querySelector ref "#editor"))
-              (let [cm (add-code-mirror ref)]
-                (.on cm "beforeChange"
-                     (fn [cm evt]
-                       (when (and (not (zero? id))
-                                  (empty? (.getValue cm))
-                                  (zero? (.. evt -to -line))
-                                  (zero? (.. evt -to -ch))
-                                  (= (.. evt -origin) "+delete"))
-                         (comp/transact! this [(api/delete-repl {:repl/id id})]))))
-                (.on cm "focus"
-                     (fn [_cm _evt]
-                       (comp/transact! this [(api/focus {:repl/id id})])))
-                (when code (.setValue cm code))
-                (comp/transact! this [(api/add-repl-editor
-                                       {:repl/id id
-                                        :repl/editor cm})]))))}
-    (d/div :#editor
-      {:classes ["w-2/4"]})
+                            :else (comp/transact! this [(api/update-repl-code
+                                                         {:repl/id id
+                                                          :repl/code (.getValue editor)})])))
+     #_ #_ :ref (fn [ref]
+                  (when (and ref (.querySelector ref "#editor"))
+                    (let [cm (add-code-mirror ref)]
+                      (.on cm "beforeChange"
+                           (fn [cm evt]
+                             (when (and (not (zero? id))
+                                        (empty? (.getValue cm))
+                                        (zero? (.. evt -to -line))
+                                        (zero? (.. evt -to -ch))
+                                        (= (.. evt -origin) "+delete"))
+                               (comp/transact! this [(api/delete-repl {:repl/id id})]))))
+                      (.on cm "focus"
+                           (fn [_cm _evt]
+                             (comp/transact! this [(api/focus {:repl/id id})])))
+                      (when code (.setValue cm code))
+                      (comp/transact! this [(api/add-repl-editor
+                                             {:repl/id id
+                                              :repl/editor cm})]))))}
+    #_(d/div :#editor
+        {:classes ["w-2/4"]})
+    (d/div {:classes ["w-2/4"]}
+      (ui-prose-editor {:theme "snow"
+                        #_ #_:modules {:toolbar false}}
+                       #_{#_ #_:toolbarHidden true
+                          :toolbar {:fontFamily "Georgia"}}))
+
     (d/div :.ml-5.text-2xl.self-center
       {:style {:color (if result-error? "#CC0000" "#333333")
                :fontFamily "monospace"}
        :classes ["w-2/4"]}
       result)))
 
-(def ui-prose (comp/computed-factory Repl {:keyfn :repl/id}))
+(def ui-prose (comp/computed-factory Prose {:keyfn :repl/id}))
 
 (defsc Root [this {:keys [:block/blocks :root/unique-id]}]
   {:query [{:block/blocks (comp/get-query Repl)} :root/unique-id]
