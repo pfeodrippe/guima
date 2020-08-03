@@ -107,19 +107,19 @@
 
 (def ui-repl (comp/computed-factory Repl {:keyfn :repl/id}))
 
-(defsc Root [this {:keys [:list/repls :root/unique-id]}]
-  {:query [{:list/repls (comp/get-query Repl)} :root/unique-id]
+(defsc Root [this {:keys [:block/repls :root/unique-id]}]
+  {:query [{:block/repls (comp/get-query Repl)} :root/unique-id]
    :initial-state (fn [_]
                     (let [b64-state (some-> js/window .-location .-href
                                             url/url :query (get "state"))
                           initial-state (some-> b64-state js/atob edn/read-string)]
-                      {:list/repls (or (some->> (:list/repls initial-state)
+                      {:block/repls (or (some->> (:block/repls initial-state)
                                                 (map-indexed (fn [idx s]
                                                                (comp/get-initial-state
                                                                 Repl (assoc s :repl/id idx))))
                                                 vec)
                                        [(comp/get-initial-state Repl {:repl/id 0})])
-                       :root/unique-id (count (:list/repls initial-state))}))}
+                       :root/unique-id (count (:block/repls initial-state))}))}
   (d/div
     (d/div :.flex
       (d/div :.justify-start.w-full.py-3.px-3.text-sm
@@ -131,7 +131,7 @@
          :style {:transform "scale(0.9)"}
          :onClick (fn [e]
                     (.preventDefault e)
-                    (let [state {:list/repls (->> repls
+                    (let [state {:block/repls (->> repls
                                                   (filter :repl/editor)
                                                   (mapv #(select-keys % [:repl/code])))}
                           clip-url (str (-> js/window .-location .-href
@@ -208,7 +208,7 @@
          js/atob
          edn/read-string))
 
-  (->> {:list/repls
+  (->> {:block/repls
         (->> (vals
               {0
                {:repl/id 0,
