@@ -105,6 +105,91 @@
 
 (def ui-repl (comp/computed-factory Repl {:keyfn :repl/id}))
 
+(defn add-prose-mirror
+  [parent]
+  (let [editor-div (.querySelector parent "#editor")
+        result-div (.querySelector parent "#result")
+        cm (CodeMirror. (fn [el]
+                          (.. parent (replaceChild el editor-div)))
+                        (clj->js {:mode "ruby"
+                                  :viewportMargin js/Infinity}))]
+    (doto cm
+      (.setSize "50%" "auto")
+      (.setOption "autoCloseBrackets" true))))
+
+(defsc Prose [this
+             {:keys [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error? :repl/code]}
+             {:keys [:on-create :on-delete]}]
+  {:query [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error? :repl/code]
+   :ident (fn [] [:repl/id id])
+   :initial-state (fn [{:keys [:repl/id :repl/code]
+                        :or {code ""}}]
+                    {:repl/id id
+                     :repl/editor nil
+                     :repl/focus false
+                     :repl/result ""
+                     :repl/result-error? false
+                     :repl/code code})}
+  (when focus
+    (.focus editor))
+  (d/div :.flex.mt-10.text-2xl
+    {:id "code-and-result",
+     :onKeyDown (fn [evt]
+                  ;; keycode 13 - Enter
+                  ;; keycode 38 - ArrowUp
+                  ;; keycode 40 - ArrowDown
+                  (cond
+                    (or (and (.-ctrlKey evt)  (= (.-keyCode evt) 13))
+                        (and (.-shiftKey evt) (= (.-keyCode evt) 13)))
+                    (comp/transact! this [(api/eval-tla-expression
+                                           {:repl/id id
+                                            :input code})])
+
+                    (and (.-altKey evt) (= (.-keyCode evt) 13))
+                    (on-create id)
+
+                    (and (= (.-keyCode evt) 38)
+                         (zero? (.. editor getCursor -line))
+                         (zero? (.. editor getCursor -ch)))
+                    (comp/transact! this [(api/focus-at-previous-repl
+                                           {:repl/id id})])
+
+                    (and (= (.-keyCode evt) 40)
+                         (= (.. editor lastLine) (.. editor getCursor -line)))
+                    (comp/transact! this [(api/focus-at-next-repl
+                                           {:repl/id id})])
+
+                    :else (comp/transact! this [(api/update-repl-code
+                                                 {:repl/id id
+                                                  :repl/code (.getValue editor)})])))
+     :ref (fn [ref]
+            (when (and ref (.querySelector ref "#editor"))
+              (let [cm (add-code-mirror ref)]
+                (.on cm "beforeChange"
+                     (fn [cm evt]
+                       (when (and (not (zero? id))
+                                  (empty? (.getValue cm))
+                                  (zero? (.. evt -to -line))
+                                  (zero? (.. evt -to -ch))
+                                  (= (.. evt -origin) "+delete"))
+                         (comp/transact! this [(api/delete-repl {:repl/id id})]))))
+                (.on cm "focus"
+                     (fn [_cm _evt]
+                       (comp/transact! this [(api/focus {:repl/id id})])))
+                (when code (.setValue cm code))
+                (comp/transact! this [(api/add-repl-editor
+                                       {:repl/id id
+                                        :repl/editor cm})]))))}
+    (d/div :#editor
+      {:classes ["w-2/4"]})
+    (d/div :.ml-5.text-2xl.self-center
+      {:style {:color (if result-error? "#CC0000" "#333333")
+               :fontFamily "monospace"}
+       :classes ["w-2/4"]}
+      result)))
+
+(def ui-prose (comp/computed-factory Repl {:keyfn :repl/id}))
+
 (defsc Root [this {:keys [:block/blocks :root/unique-id]}]
   {:query [{:block/blocks (comp/get-query Repl)} :root/unique-id]
    :initial-state (fn [_]
@@ -112,47 +197,48 @@
                                             url/url :query (get "state"))
                           initial-state (some-> b64-state js/atob edn/read-string)]
                       {:block/blocks (or (some->> (:block/blocks initial-state)
-                                                (map-indexed (fn [idx s]
-                                                               (comp/get-initial-state
-                                                                Repl (assoc s :repl/id idx))))
-                                                vec)
-                                       [(comp/get-initial-state Repl {:repl/id 0})])
+                                                  (map-indexed (fn [idx s]
+                                                                 (comp/get-initial-state
+                                                                  Repl (assoc s :repl/id idx))))
+                                                  vec)
+                                         [(comp/get-initial-state Repl {:repl/id 0})])
                        :root/unique-id (count (:block/blocks initial-state))}))}
   (d/div
-    (d/div :.flex
-      (d/div :.justify-start.w-full.py-3.px-3.text-sm
-        (d/b "Guima")
-        (d/span " | A TLA+ REPL"))
-      (d/a :.bg-red-300.hover:bg-red-400.text-gray-800.font-bold.py-2.px-4.rounded.inline-flex.items-center
-        {:target "_blank",
-         :href "_blank"
-         :style {:transform "scale(0.9)"}
-         :onClick (fn [e]
-                    (.preventDefault e)
-                    (let [state {:block/blocks (->> blocks
-                                                    (filter :repl/editor)
-                                                    (mapv #(select-keys % [:repl/code])))}
-                          clip-url (str (-> js/window .-location .-href
-                                            url/url (assoc :query {}))
-                                        "?state="
-                                        (-> state pr-str js/btoa))]
-                      (.. js/navigator -clipboard (writeText clip-url))))}
-        (d/span
-          "🔗")
-        (d/span :.ml-5
-          "Share"))
-      (d/a :.bg-yellow-300.hover:bg-yellow-400.text-gray-800.font-bold.py-2.px-4.rounded.inline-flex.items-center
-        {:target "_blank",
-         :href "https://www.buymeacoffee.com/pfeodrippe",
-         :style {:transform "scale(0.9)"}}
-        (d/img {:src "https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg"
-                :alt "Buy me a coffee"})
-        (d/span :.ml-5
-          "Buy me a coffee")))
-    (let [on-create (fn [before-id]
-                      (comp/transact! this [(api/add-repl {:before-id before-id})]))
-          on-delete (fn [id] (comp/transact! this [(api/delete-repl {:repl/id id })]))]
-      (map #(ui-repl % {:on-create on-create :on-delete on-delete}) blocks))))
+      (d/div :.flex
+        (d/div :.justify-start.w-full.py-3.px-3.text-sm
+          (d/b "Guima")
+          (d/span " | A TLA+ REPL"))
+        (d/a :.bg-red-300.hover:bg-red-400.text-gray-800.font-bold.py-2.px-4.rounded.inline-flex.items-center
+          {:target "_blank",
+           :href "_blank"
+           :style {:transform "scale(0.9)"}
+           :onClick (fn [e]
+                      (.preventDefault e)
+                      (let [state {:block/blocks (->> blocks
+                                                      (filter :repl/editor)
+                                                      (mapv #(select-keys % [:repl/code])))}
+                            clip-url (str (-> js/window .-location .-href
+                                              url/url (assoc :query {}))
+                                          "?state="
+                                          (-> state pr-str js/btoa))]
+                        (.. js/navigator -clipboard (writeText clip-url))))}
+          (d/span
+              "🔗")
+          (d/span :.ml-5
+            "Share"))
+        (d/a :.bg-yellow-300.hover:bg-yellow-400.text-gray-800.font-bold.py-2.px-4.rounded.inline-flex.items-center
+          {:target "_blank",
+           :href "https://www.buymeacoffee.com/pfeodrippe",
+           :style {:transform "scale(0.9)"}}
+          (d/img {:src "https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg"
+                  :alt "Buy me a coffee"})
+          (d/span :.ml-5
+            "Buy me a coffee")))
+      (let [on-create (fn [before-id]
+                        (comp/transact! this [(api/add-repl {:before-id before-id})]))
+            on-delete (fn [id] (comp/transact! this [(api/delete-repl {:repl/id id })]))]
+        #_(map #(ui-repl % {:on-create on-create :on-delete on-delete}) blocks)
+        (map #(ui-prose % {:on-create on-create :on-delete on-delete}) blocks))))
 
 (defn ^:export refresh
   "During development, shadow-cljs will call this on every hot reload of source. See shadow-cljs.edn"
