@@ -94,6 +94,12 @@
     (swap! state update-in [:repl/id id] assoc
            :repl/code code)))
 
+(defmutation update-prose-text
+  [{:keys [:repl/id :block.prose/text]}]
+  (action [{:keys [:state]}]
+    (swap! state update-in [:repl/id id] assoc
+           :block.prose/text text)))
+
 (defmutation update-repl-result
   [{:keys [:repl/id :repl/result :repl/result-error?]}]
   (action [{:keys [:state]}]

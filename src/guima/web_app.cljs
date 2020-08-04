@@ -15,7 +15,7 @@
    ["codemirror/lib/codemirror" :as CodeMirror]
    ["codemirror/mode/ruby/ruby"]
    ["codemirror/addon/edit/closebrackets"]
-   ["react-quill" :as ReactQuill]))
+   ["react-quill" :as ReactQuill :refer [Quill]]))
 
 (def log js/console.log)
 
@@ -122,19 +122,20 @@
       (.setOption "autoCloseBrackets" true))))
 
 (defsc Prose [this
-             {:keys [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error? :repl/code]}
+              {:keys [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error? :repl/code :block.prose/text]}
              {:keys [:on-create :on-delete]}]
-  {:query [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error? :repl/code]
+  {:query [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error? :repl/code :block.prose/text]
    :ident (fn [] [:repl/id id])
    :initial-state (fn [{:keys [:repl/id :repl/code]
                         :or {code ""}}]
                     {:repl/id id
+                     :block.prose/text "Olhg"
                      :repl/editor nil
                      :repl/focus false
                      :repl/result ""
                      :repl/result-error? false
                      :repl/code code})}
-  (when focus
+  #_(when focus
     (.focus editor))
   (d/div :.flex.mt-10.text-2xl
     {:id "code-and-result",
@@ -187,10 +188,22 @@
     #_(d/div :#editor
         {:classes ["w-2/4"]})
     (d/div {:classes ["w-2/4"]}
-      (ui-prose-editor {:theme "snow"
-                        #_ #_:modules {:toolbar false}}
-                       #_{#_ #_:toolbarHidden true
-                          :toolbar {:fontFamily "Georgia"}}))
+      (ui-prose-editor {:theme nil
+                        :value text
+                        :onChange (fn [a b c editor]
+                                    (when (= c "user")
+                                      (js/console.log text)
+                                      (comp/transact! this
+                                                      [(api/update-prose-text
+                                                        {:repl/id id
+                                                         :block.prose/text (.getContents editor)
+                                                         #_(.map (.getContents editor)
+                                                                 (fn [op]
+                                                                   (-> (js->clj op)
+                                                                       (update "attributes" merge
+                                                                               {:font "serif"
+                                                                                :size "large"})
+                                                                       clj->js)))})])))}))
 
     (d/div :.ml-5.text-2xl.self-center
       {:style {:color (if result-error? "#CC0000" "#333333")
@@ -201,7 +214,7 @@
 (def ui-prose (comp/computed-factory Prose {:keyfn :repl/id}))
 
 (defsc Root [this {:keys [:block/blocks :root/unique-id]}]
-  {:query [{:block/blocks (comp/get-query Repl)} :root/unique-id]
+  {:query [{:block/blocks (comp/get-query Prose #_Repl)} :root/unique-id]
    :initial-state (fn [_]
                     (let [b64-state (some-> js/window .-location .-href
                                             url/url :query (get "state"))
@@ -209,9 +222,9 @@
                       {:block/blocks (or (some->> (:block/blocks initial-state)
                                                   (map-indexed (fn [idx s]
                                                                  (comp/get-initial-state
-                                                                  Repl (assoc s :repl/id idx))))
+                                                                  Prose #_Repl (assoc s :repl/id idx))))
                                                   vec)
-                                         [(comp/get-initial-state Repl {:repl/id 0})])
+                                         [(comp/get-initial-state Prose #_Repl {:repl/id 0})])
                        :root/unique-id (count (:block/blocks initial-state))}))}
   (d/div
       (d/div :.flex
