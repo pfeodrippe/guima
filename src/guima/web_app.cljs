@@ -137,7 +137,7 @@
                      :repl/code code})}
   #_(when focus
     (.focus editor))
-  (d/div :.flex.mt-10.text-2xl
+  (d/div :.flex.text-2xl
     {:id "code-and-result",
      #_ #_   :onKeyDown (fn [evt]
                           ;; keycode 13 - Enter
@@ -207,12 +207,16 @@
                         :onKeyDown (fn [e]
                                      (when (= (.-keyCode e) 13)
                                        (println 32)
-                                       (on-create id)))
+                                       (.preventDefault e)
+                                       (on-create id)
+                                       false))
                         :onFocus (fn []
                                    (comp/transact! this [(api/focus {:repl/id id})]))
                         :ref (fn [ref]
                                (when (and ref (nil? focus))
-                                   (.focus ref)))}))
+                                 (.focus ref)))
+                        #_ #_:modules {:keyboard {:bindings {:linebreak {:key 13
+                                                                    :handler (fn [] (on-create id))}}}}}))
 
     (d/div :.ml-5.text-2xl.self-center
       {:style {:color (if result-error? "#CC0000" "#333333")
