@@ -129,9 +129,9 @@
    :initial-state (fn [{:keys [:repl/id :repl/code]
                         :or {code ""}}]
                     {:repl/id id
-                     :block.prose/text "Olhg"
+                     :block.prose/text ""
                      :repl/editor nil
-                     :repl/focus false
+                     :repl/focus nil
                      :repl/result ""
                      :repl/result-error? false
                      :repl/code code})}
@@ -203,7 +203,16 @@
                                                                        (update "attributes" merge
                                                                                {:font "serif"
                                                                                 :size "large"})
-                                                                       clj->js)))})])))}))
+                                                                       clj->js)))})])))
+                        :onKeyDown (fn [e]
+                                     (when (= (.-keyCode e) 13)
+                                       (println 32)
+                                       (on-create id)))
+                        :onFocus (fn []
+                                   (comp/transact! this [(api/focus {:repl/id id})]))
+                        :ref (fn [ref]
+                               (when (and ref (nil? focus))
+                                   (.focus ref)))}))
 
     (d/div :.ml-5.text-2xl.self-center
       {:style {:color (if result-error? "#CC0000" "#333333")
