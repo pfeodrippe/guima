@@ -6,9 +6,9 @@
 
 (defn- remove-all-focus
   [s]
-  (update s :repl/id (fn [id->repl]
+  (update s :block.repl/id (fn [id->repl]
                        (->> (map (fn [[id repl]]
-                                   [id (assoc repl :repl/focus false)])
+                                   [id (assoc repl :block.repl/focus false)])
                                  id->repl)
                             (into {})))))
 
@@ -36,97 +36,123 @@
                    (let [id (inc (:root/unique-id s))
                          new-list (reduce (fn [acc [ident old-id]]
                                             (if (= old-id before-id)
-                                              (conj acc [ident old-id] [:repl/id id])
+                                              (conj acc [ident old-id] [:block.repl/id id])
                                               (conj acc [ident old-id])))
                                           [] (:block/blocks s))]
                      (-> s
-                         (assoc-in [:repl/id id] {:repl/id id})
+                         (assoc-in [:block.repl/id id] {:block.repl/id id
+                                                  :block.repl/editor nil
+                                                  :block.repl/focus false
+                                                  :block.repl/result ""
+                                                  :block.repl/result-error? false
+                                                  :block.repl/code ""})
+                         (assoc :block/blocks new-list)
+                         (assoc :root/unique-id id)))))))
+
+(defmutation add-prose-block
+  [{:keys [:before-id]}]
+  (action [{:keys [:state]}]
+    (swap! state (fn [s]
+                   ;; find index position using `before-id` and put new repl after it
+                   (let [id (inc (:root/unique-id s))
+                         new-list (reduce (fn [acc [ident old-id]]
+                                            (if (= old-id before-id)
+                                              (conj acc [ident old-id] [:block.repl/id id])
+                                              (conj acc [ident old-id])))
+                                          [] (:block/blocks s))]
+                     (-> s
+                         (assoc-in [:block.repl/id id] {:block.repl/id id
+                                                  :block.repl/editor nil
+                                                  :block.repl/focus false
+                                                  :block.repl/result ""
+                                                  :block.repl/result-error? false
+                                                  :block.repl/code ""})
                          (assoc :block/blocks new-list)
                          (assoc :root/unique-id id)))))))
 
 (defmutation add-repl-editor
-  [{:keys [:repl/id :repl/editor]}]
+  [{:keys [:block.repl/id :block.repl/editor]}]
   (action [{:keys [:state]}]
     (swap! state #(-> %
                       remove-all-focus
-                      (update-in [:repl/id id] assoc :repl/editor editor :repl/focus true)))))
+                      (update-in [:block.repl/id id] assoc :block.repl/editor editor :block.repl/focus true)))))
 
 (defmutation delete-repl
-  [{:keys [:repl/id]}]
+  [{:keys [:block.repl/id]}]
   (action [{:keys [:state]}]
     (swap! state #(let [previous-id (get-previous-id % id)]
                     (-> %
                         remove-all-focus
-                        (update :repl/id dissoc id)
-                        (update-in [:repl/id previous-id] assoc :repl/focus true)
-                        (merge/remove-ident* [:repl/id id] [:block/blocks]))))))
+                        (update :block.repl/id dissoc id)
+                        #_(update-in [:block.repl/id previous-id] assoc :block.repl/focus true)
+                        (merge/remove-ident* [:block.repl/id id] [:block/blocks]))))))
 
 (defmutation focus-at-previous-repl
-  [{:keys [:repl/id]}]
+  [{:keys [:block.repl/id]}]
   (action [{:keys [:state]}]
     (swap! state #(let [previous-id (get-previous-id % id)]
                     (if previous-id
                       (-> %
                           remove-all-focus
-                          (update-in [:repl/id previous-id] assoc :repl/focus true))
+                          (update-in [:block.repl/id previous-id] assoc :block.repl/focus true))
                       %)))))
 
 (defmutation focus
-  [{:keys [:repl/id]}]
+  [{:keys [:block.repl/id]}]
   (action [{:keys [:state]}]
     (swap! state #(-> %
-                      #_remove-all-focus
-                      (update-in [:repl/id id] assoc :repl/focus true)))))
+                      remove-all-focus
+                      (update-in [:block.repl/id id] assoc :block.repl/focus true)))))
 
 (defmutation blur
-  [{:keys [:repl/id]}]
+  [{:keys [:block.repl/id]}]
   (action [{:keys [:state]}]
-    (swap! state update-in [:repl/id id] assoc :repl/focus false)))
+    (swap! state update-in [:block.repl/id id] assoc :block.repl/focus false)))
 
 (defmutation focus-at-next-repl
-  [{:keys [:repl/id]}]
+  [{:keys [:block.repl/id]}]
   (action [{:keys [:state]}]
     (swap! state #(let [next-id (get-next-id % id)]
                     (if next-id
                       (-> %
                           remove-all-focus
-                          (update-in [:repl/id next-id] assoc :repl/focus true))
+                          (update-in [:block.repl/id next-id] assoc :block.repl/focus true))
                       %)))))
 
 (defmutation update-repl-code
-  [{:keys [:repl/id :repl/code]}]
+  [{:keys [:block.repl/id :block.repl/code]}]
   (action [{:keys [:state]}]
-    (swap! state update-in [:repl/id id] assoc
-           :repl/code code)))
+    (swap! state update-in [:block.repl/id id] assoc
+           :block.repl/code code)))
 
 (defmutation update-prose-text
-  [{:keys [:repl/id :block.prose/text]}]
+  [{:keys [:block.repl/id :block.prose/text]}]
   (action [{:keys [:state]}]
-    (swap! state update-in [:repl/id id] assoc
+    (swap! state update-in [:block.repl/id id] assoc
            :block.prose/text text)))
 
 (defmutation update-prose-editor
-  [{:keys [:repl/id :repl/editor]}]
+  [{:keys [:block.repl/id :block.repl/editor]}]
   (action [{:keys [:state]}]
-    (swap! state update-in [:repl/id id] assoc
-           :repl/editor editor)))
+    (swap! state update-in [:block.repl/id id] assoc
+           :block.repl/editor editor)))
 
 (defmutation update-repl-result
-  [{:keys [:repl/id :repl/result :repl/result-error?]}]
+  [{:keys [:block.repl/id :block.repl/result :block.repl/result-error?]}]
   (action [{:keys [:state]}]
-    (swap! state update-in [:repl/id id] assoc
-           :repl/result result
-           :repl/result-error? result-error?)))
+    (swap! state update-in [:block.repl/id id] assoc
+           :block.repl/result result
+           :block.repl/result-error? result-error?)))
 
 (defmutation eval-tla-expression
-  [{:keys [:repl/id]}]
+  [{:keys [:block.repl/id]}]
   (ok-action [{:keys [:app :result]}]
     (let [body (get-in result [:body `eval-tla-expression])]
       (if (:error body)
-        (comp/transact! app [(update-repl-result {:repl/id id
-                                                  :repl/result (get-in body [:error :message])
-                                                  :repl/result-error? true})])
-        (comp/transact! app [(update-repl-result {:repl/id id
-                                                  :repl/result (:data body)
-                                                  :repl/result-error? false})]))))
+        (comp/transact! app [(update-repl-result {:block.repl/id id
+                                                  :block.repl/result (get-in body [:error :message])
+                                                  :block.repl/result-error? true})])
+        (comp/transact! app [(update-repl-result {:block.repl/id id
+                                                  :block.repl/result (:data body)
+                                                  :block.repl/result-error? false})]))))
   (remote [env] true))

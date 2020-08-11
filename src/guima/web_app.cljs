@@ -37,18 +37,20 @@
       (.setOption "autoCloseBrackets" true))))
 
 (defsc Repl [this
-             {:keys [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error? :repl/code]}
+             {:keys [:block.repl/id :block.repl/editor :block.repl/focus
+                     :block.repl/result :block.repl/result-error? :block.repl/code]}
              {:keys [:on-create :on-delete]}]
-  {:query [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error? :repl/code]
-   :ident (fn [] [:repl/id id])
-   :initial-state (fn [{:keys [:repl/id :repl/code]
+  {:query [:block.repl/id :block.repl/editor :block.repl/focus
+           :block.repl/result :block.repl/result-error? :block.repl/code]
+   :ident (fn [] [:block.repl/id id])
+   :initial-state (fn [{:keys [:block.repl/id :block.repl/code]
                         :or {code ""}}]
-                    {:repl/id id
-                     :repl/editor nil
-                     :repl/focus false
-                     :repl/result ""
-                     :repl/result-error? false
-                     :repl/code code})}
+                    {:block.repl/id id
+                     :block.repl/editor nil
+                     :block.repl/focus false
+                     :block.repl/result ""
+                     :block.repl/result-error? false
+                     :block.repl/code code})}
   (when focus
     (.focus editor))
   (d/div :.flex.mt-10.text-2xl
@@ -61,7 +63,7 @@
                     (or (and (.-ctrlKey evt)  (= (.-keyCode evt) 13))
                         (and (.-shiftKey evt) (= (.-keyCode evt) 13)))
                     (comp/transact! this [(api/eval-tla-expression
-                                           {:repl/id id
+                                           {:block.repl/id id
                                             :input code})])
 
                     (and (.-altKey evt) (= (.-keyCode evt) 13))
@@ -71,16 +73,16 @@
                          (zero? (.. editor getCursor -line))
                          (zero? (.. editor getCursor -ch)))
                     (comp/transact! this [(api/focus-at-previous-repl
-                                           {:repl/id id})])
+                                           {:block.repl/id id})])
 
                     (and (= (.-keyCode evt) 40)
                          (= (.. editor lastLine) (.. editor getCursor -line)))
                     (comp/transact! this [(api/focus-at-next-repl
-                                           {:repl/id id})])
+                                           {:block.repl/id id})])
 
                     :else (comp/transact! this [(api/update-repl-code
-                                                 {:repl/id id
-                                                  :repl/code (.getValue editor)})])))
+                                                 {:block.repl/id id
+                                                  :block.repl/code (.getValue editor)})])))
      :ref (fn [ref]
             (when (and ref (.querySelector ref "#editor"))
               (let [cm (add-code-mirror ref)]
@@ -91,14 +93,14 @@
                                   (zero? (.. evt -to -line))
                                   (zero? (.. evt -to -ch))
                                   (= (.. evt -origin) "+delete"))
-                         (comp/transact! this [(api/delete-repl {:repl/id id})]))))
+                         (comp/transact! this [(api/delete-repl {:block.repl/id id})]))))
                 (.on cm "focus"
                      (fn [_cm _evt]
-                       (comp/transact! this [(api/focus {:repl/id id})])))
+                       (comp/transact! this [(api/focus {:block.repl/id id})])))
                 (when code (.setValue cm code))
                 (comp/transact! this [(api/add-repl-editor
-                                       {:repl/id id
-                                        :repl/editor cm})]))))}
+                                       {:block.repl/id id
+                                        :block.repl/editor cm})]))))}
     (d/div :#editor
       {:classes ["w-2/4"]})
     (d/div :.ml-5.text-2xl.self-center
@@ -107,58 +109,49 @@
        :classes ["w-2/4"]}
       result)))
 
-(def ui-repl (comp/computed-factory Repl {:keyfn :repl/id}))
-
-(defn add-prose-mirror
-  [parent]
-  (let [editor-div (.querySelector parent "#editor")
-        result-div (.querySelector parent "#result")
-        cm (CodeMirror. (fn [el]
-                          (.. parent (replaceChild el editor-div)))
-                        (clj->js {:mode "ruby"
-                                  :viewportMargin js/Infinity}))]
-    (doto cm
-      (.setSize "50%" "auto")
-      (.setOption "autoCloseBrackets" true))))
+(def ui-repl (comp/computed-factory Repl {:keyfn :block.repl/id}))
 
 (defsc Prose [this
-              {:keys [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error? :repl/code :block.prose/text]}
-             {:keys [:on-create :on-delete]}]
-  {:query [:repl/id :repl/editor :repl/focus :repl/result :repl/result-error? :repl/code :block.prose/text]
-   :ident (fn [] [:repl/id id])
-   :initial-state (fn [{:keys [:repl/id :repl/code]
+              {:keys [:block.prose/id :block.prose/editor :block.prose/focus :block.prose/result :block.prose/result-error? :block.prose/code :block.prose/text]}
+              {:keys [:on-create :on-delete]}]
+  {:query [:block.prose/id :block.prose/editor :block.prose/focus :block.prose/result :block.prose/result-error? :block.prose/code :block.prose/text]
+   :ident (fn [] [:block.prose/id id])
+   :initial-state (fn [{:keys [:block.prose/id :block.prose/code]
                         :or {code ""}}]
-                    {:repl/id id
+                    {:block.prose/id id
                      :block.prose/text ""
-                     :repl/editor (.createEmpty EditorState)
-                     :repl/focus nil
-                     :repl/result ""
-                     :repl/result-error? false
-                     :repl/code code})}
+                     :block.prose/editor (.createEmpty EditorState)
+                     :block.prose/focus nil
+                     :block.prose/result ""
+                     :block.prose/result-error? false
+                     :block.prose/code code})}
   #_(when focus
-    (.focus editor))
+      (.focus editor))
   (d/div :.flex.text-2xl.p-3
-    {:id "code-and-result",}
-    (d/div {:style {:font-size "20px"
-                    :font-family "georgia,times,serif"}
+    {:id "code-and-result"}
+    (d/div {:style {:fontSize "20px"
+                    :fontFamily "georgia,times,serif"}
             :classes ["w-2/4"]}
       (ui-prose-editor {:ref (fn [ref]
                                ref)
                         :editorState editor
+                        :handleReturn (fn [a b]
+                                        (on-create id)
+                                        "handled")
                         :onChange (fn [state]
                                     (comp/transact! this
                                                     [(api/update-prose-editor
-                                                      {:repl/id id
-                                                       :repl/editor state})]))}
+                                                      {:block.prose/id id
+                                                       :block.prose/editor state})]))}
                        #_{:theme nil
                           :value text
                           :onChange (fn [a b c editor]
                                       (when (= c "user")
                                         (js/console.log text)
                                         (comp/transact! this
-                                                        [#_(api/focus {:repl/id id})
+                                                        [#_(api/focus {:block.prose/id id})
                                                          (api/update-prose-text
-                                                          {:repl/id id
+                                                          {:block.prose/id id
                                                            :block.prose/text (.getContents editor)})])))
                           #_ #_:onKeyDown (fn [e]
                                             (when (= (.-keyCode e) 13)
@@ -168,16 +161,16 @@
                                               false))
                           #_ #_:onFocus (fn []
                                           (println :ID id)
-                                          (comp/transact! this [(api/focus {:repl/id id})]))
+                                          (comp/transact! this [(api/focus {:block.prose/id id})]))
                           #_ #_:onChangeSelection (fn [range]
                                                     (if range
                                                       (do (println :FOCUS id)
-                                                          (comp/transact! this [(api/focus {:repl/id id})]))
+                                                          (comp/transact! this [(api/focus {:block.prose/id id})]))
                                                       (do (println :BLUR id)
-                                                          (comp/transact! this [(api/blur  {:repl/id id})]))))
+                                                          (comp/transact! this [(api/blur  {:block.prose/id id})]))))
                           #_ #_:onBlur (fn []
                                          (println :BLUR id)
-                                         (comp/transact! this [(api/blur {:repl/id id})]))
+                                         (comp/transact! this [(api/blur {:block.prose/id id})]))
                           :ref (fn [ref]
                                  #_(log ref)
                                  #_ (when (and ref (nil? focus))
@@ -200,15 +193,34 @@
                                                             :handler (fn [] (on-create id))}}}}}))
 
     #_(d/div :.ml-5.text-2xl.self-center
-      {:style {:color (if result-error? "#CC0000" "#333333")
-               :fontFamily "monospace"}
-       :classes ["w-2/4"]}
-      result)))
+        {:style {:color (if result-error? "#CC0000" "#333333")
+                 :fontFamily "monospace"}
+         :classes ["w-2/4"]}
+        result)))
 
 (def ui-prose (comp/computed-factory Prose {:keyfn :repl/id}))
 
+(defsc BlockUnion [this props]
+  {:ident (fn []
+            (cond
+              (:block.repl/id props)  [:block.repl/id (:block.repl/id props)]
+              (:block.prose/id props) [:block.prose/id (:block.prose/id props)]
+              :else (println :>>>>>>>>>>>>>>>>ERROR!!!)))
+   :query (fn [] {:block.repl/id (comp/get-query Repl)
+                  :block.prose/id  (comp/get-query Prose)})}
+  (cond
+    (:block.repl/id props) (ui-repl props)
+    (:block.prose/id props) (ui-prose props)
+    :else (d/div "Invalid ident used in app state.")))
+
+(def ui-block-union (comp/factory BlockUnion {:keyfn
+                                              (fn [props]
+                                                (cond
+                                                  (:block.repl/id props) [:block.repl/id (:block.repl/id props)]
+                                                  (:block.prose/id props) [:block.prose/id (:block.prose/id props)]))}))
+
 (defsc Root [this {:keys [:block/blocks :root/unique-id]}]
-  {:query [{:block/blocks (comp/get-query Prose #_Repl)} :root/unique-id]
+  {:query [{:block/blocks {:block.repl/id (comp/get-query #_Prose  Repl)}} :root/unique-id]
    :initial-state (fn [_]
                     (let [b64-state (some-> js/window .-location .-href
                                             url/url :query (get "state"))
@@ -216,9 +228,9 @@
                       {:block/blocks (or (some->> (:block/blocks initial-state)
                                                   (map-indexed (fn [idx s]
                                                                  (comp/get-initial-state
-                                                                  Prose #_Repl (assoc s :repl/id idx))))
+                                                                  Prose #_Repl (assoc s :block.repl/id idx))))
                                                   vec)
-                                         [(comp/get-initial-state Prose #_Repl {:repl/id 0})])
+                                         [(comp/get-initial-state Prose #_Repl {:block.repl/id 0})])
                        :root/unique-id (count (:block/blocks initial-state))}))}
   (d/div
       (d/div :.flex
@@ -232,8 +244,8 @@
            :onClick (fn [e]
                       (.preventDefault e)
                       (let [state {:block/blocks (->> blocks
-                                                      (filter :repl/editor)
-                                                      (mapv #(select-keys % [:repl/code])))}
+                                                      (filter :block.repl/editor)
+                                                      (mapv #(select-keys % [:block.repl/code])))}
                             clip-url (str (-> js/window .-location .-href
                                               url/url (assoc :query {}))
                                           "?state="
@@ -253,9 +265,9 @@
             "Buy me a coffee")))
       (let [on-create (fn [before-id]
                         (comp/transact! this [(api/add-repl {:before-id before-id})]))
-            on-delete (fn [id] (comp/transact! this [(api/delete-repl {:repl/id id })]))]
-        #_(map #(ui-repl % {:on-create on-create :on-delete on-delete}) blocks)
-        (map #(ui-prose % {:on-create on-create :on-delete on-delete}) blocks))))
+            on-delete (fn [id] (comp/transact! this [(api/delete-repl {:block.repl/id id })]))]
+        (map #(ui-repl % {:on-create on-create :on-delete on-delete}) blocks)
+        #_(map #(ui-prose % {:on-create on-create :on-delete on-delete}) blocks))))
 
 (defn ^:export refresh
   "During development, shadow-cljs will call this on every hot reload of source. See shadow-cljs.edn"
