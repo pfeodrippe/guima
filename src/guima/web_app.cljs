@@ -15,14 +15,14 @@
    ["codemirror/lib/codemirror" :as CodeMirror]
    ["codemirror/mode/ruby/ruby"]
    ["codemirror/addon/edit/closebrackets"]
-   ["react-quill" :as ReactQuill :refer [Quill]]))
+   ["draft-js" :refer [Editor, EditorState]]))
 
 (def log js/console.log)
 
 (defonce app (app/fulcro-app
               {:remotes {:remote (http-remote/fulcro-http-remote {})}}))
 
-(def ui-prose-editor (interop/react-factory ReactQuill))
+(def ui-prose-editor (interop/react-factory Editor))
 
 (defn add-code-mirror
   [parent]
@@ -130,95 +130,76 @@
                         :or {code ""}}]
                     {:repl/id id
                      :block.prose/text ""
-                     :repl/editor nil
+                     :repl/editor (.createEmpty EditorState)
                      :repl/focus nil
                      :repl/result ""
                      :repl/result-error? false
                      :repl/code code})}
   #_(when focus
     (.focus editor))
-  (d/div :.flex.text-2xl
-    {:id "code-and-result",
-     #_ #_   :onKeyDown (fn [evt]
-                          ;; keycode 13 - Enter
-                          ;; keycode 38 - ArrowUp
-                          ;; keycode 40 - ArrowDown
-                          (cond
-                            (or (and (.-ctrlKey evt)  (= (.-keyCode evt) 13))
-                                (and (.-shiftKey evt) (= (.-keyCode evt) 13)))
-                            (comp/transact! this [(api/eval-tla-expression
-                                                   {:repl/id id
-                                                    :input code})])
+  (d/div :.flex.text-2xl.p-3
+    {:id "code-and-result",}
+    (d/div {:style {:font-size "20px"
+                    :font-family "georgia,times,serif"}
+            :classes ["w-2/4"]}
+      (ui-prose-editor {:ref (fn [ref]
+                               ref)
+                        :editorState editor
+                        :onChange (fn [state]
+                                    (comp/transact! this
+                                                    [(api/update-prose-editor
+                                                      {:repl/id id
+                                                       :repl/editor state})]))}
+                       #_{:theme nil
+                          :value text
+                          :onChange (fn [a b c editor]
+                                      (when (= c "user")
+                                        (js/console.log text)
+                                        (comp/transact! this
+                                                        [#_(api/focus {:repl/id id})
+                                                         (api/update-prose-text
+                                                          {:repl/id id
+                                                           :block.prose/text (.getContents editor)})])))
+                          #_ #_:onKeyDown (fn [e]
+                                            (when (= (.-keyCode e) 13)
+                                              (println 32)
+                                              (.preventDefault e)
+                                              (on-create id)
+                                              false))
+                          #_ #_:onFocus (fn []
+                                          (println :ID id)
+                                          (comp/transact! this [(api/focus {:repl/id id})]))
+                          #_ #_:onChangeSelection (fn [range]
+                                                    (if range
+                                                      (do (println :FOCUS id)
+                                                          (comp/transact! this [(api/focus {:repl/id id})]))
+                                                      (do (println :BLUR id)
+                                                          (comp/transact! this [(api/blur  {:repl/id id})]))))
+                          #_ #_:onBlur (fn []
+                                         (println :BLUR id)
+                                         (comp/transact! this [(api/blur {:repl/id id})]))
+                          :ref (fn [ref]
+                                 #_(log ref)
+                                 #_ (when (and ref (nil? focus))
+                                      (println :SASx)
+                                      (.focus ref))
+                                 (when ref
+                                   #_(log (.getEditor ref))
+                                   (.on (.getEditor ref) "selection-change"
+                                        (fn [range old-range source]
+                                          (when (= source "user")
+                                            (println id range)
+                                            (if (some? range)
+                                              (.focus ref)
+                                              #_(.blur ref)))))))
+                          #_ #_:modules {:keyboard {:bindings {:tab true}}}
+                          :modules {:keyboard {:bindings #_{:enter {:key 13
+                                                                    :empty true
+                                                                    :handler (fn [] (on-create id))}}
+                                               {:linebreak {:key 13
+                                                            :handler (fn [] (on-create id))}}}}}))
 
-                            (and (.-altKey evt) (= (.-keyCode evt) 13))
-                            (on-create id)
-
-                            (and (= (.-keyCode evt) 38)
-                                 (zero? (.. editor getCursor -line))
-                                 (zero? (.. editor getCursor -ch)))
-                            (comp/transact! this [(api/focus-at-previous-repl
-                                                   {:repl/id id})])
-
-                            (and (= (.-keyCode evt) 40)
-                                 (= (.. editor lastLine) (.. editor getCursor -line)))
-                            (comp/transact! this [(api/focus-at-next-repl
-                                                   {:repl/id id})])
-
-                            :else (comp/transact! this [(api/update-repl-code
-                                                         {:repl/id id
-                                                          :repl/code (.getValue editor)})])))
-     #_ #_ :ref (fn [ref]
-                  (when (and ref (.querySelector ref "#editor"))
-                    (let [cm (add-code-mirror ref)]
-                      (.on cm "beforeChange"
-                           (fn [cm evt]
-                             (when (and (not (zero? id))
-                                        (empty? (.getValue cm))
-                                        (zero? (.. evt -to -line))
-                                        (zero? (.. evt -to -ch))
-                                        (= (.. evt -origin) "+delete"))
-                               (comp/transact! this [(api/delete-repl {:repl/id id})]))))
-                      (.on cm "focus"
-                           (fn [_cm _evt]
-                             (comp/transact! this [(api/focus {:repl/id id})])))
-                      (when code (.setValue cm code))
-                      (comp/transact! this [(api/add-repl-editor
-                                             {:repl/id id
-                                              :repl/editor cm})]))))}
-    #_(d/div :#editor
-        {:classes ["w-2/4"]})
-    (d/div {:classes ["w-2/4"]}
-      (ui-prose-editor {:theme nil
-                        :value text
-                        :onChange (fn [a b c editor]
-                                    (when (= c "user")
-                                      (js/console.log text)
-                                      (comp/transact! this
-                                                      [(api/update-prose-text
-                                                        {:repl/id id
-                                                         :block.prose/text (.getContents editor)
-                                                         #_(.map (.getContents editor)
-                                                                 (fn [op]
-                                                                   (-> (js->clj op)
-                                                                       (update "attributes" merge
-                                                                               {:font "serif"
-                                                                                :size "large"})
-                                                                       clj->js)))})])))
-                        :onKeyDown (fn [e]
-                                     (when (= (.-keyCode e) 13)
-                                       (println 32)
-                                       (.preventDefault e)
-                                       (on-create id)
-                                       false))
-                        :onFocus (fn []
-                                   (comp/transact! this [(api/focus {:repl/id id})]))
-                        :ref (fn [ref]
-                               (when (and ref (nil? focus))
-                                 (.focus ref)))
-                        #_ #_:modules {:keyboard {:bindings {:linebreak {:key 13
-                                                                    :handler (fn [] (on-create id))}}}}}))
-
-    (d/div :.ml-5.text-2xl.self-center
+    #_(d/div :.ml-5.text-2xl.self-center
       {:style {:color (if result-error? "#CC0000" "#333333")
                :fontFamily "monospace"}
        :classes ["w-2/4"]}

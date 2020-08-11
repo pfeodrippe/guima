@@ -75,8 +75,13 @@
   [{:keys [:repl/id]}]
   (action [{:keys [:state]}]
     (swap! state #(-> %
-                      remove-all-focus
+                      #_remove-all-focus
                       (update-in [:repl/id id] assoc :repl/focus true)))))
+
+(defmutation blur
+  [{:keys [:repl/id]}]
+  (action [{:keys [:state]}]
+    (swap! state update-in [:repl/id id] assoc :repl/focus false)))
 
 (defmutation focus-at-next-repl
   [{:keys [:repl/id]}]
@@ -99,6 +104,12 @@
   (action [{:keys [:state]}]
     (swap! state update-in [:repl/id id] assoc
            :block.prose/text text)))
+
+(defmutation update-prose-editor
+  [{:keys [:repl/id :repl/editor]}]
+  (action [{:keys [:state]}]
+    (swap! state update-in [:repl/id id] assoc
+           :repl/editor editor)))
 
 (defmutation update-repl-result
   [{:keys [:repl/id :repl/result :repl/result-error?]}]
