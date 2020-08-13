@@ -209,7 +209,6 @@
    :query (fn []
             {:block.repl/id (comp/get-query Repl)
              :block.prose/id  (comp/get-query Prose)})}
-  (println :PAa parent-fns)
   (cond
     (:block.repl/id props) (ui-repl props parent-fns)
     (:block.prose/id props) (ui-prose props parent-fns)
@@ -218,12 +217,13 @@
 (def ui-block (comp/computed-factory Block
                                      {:keyfn
                                       (fn [props]
-                                        (cond
-                                          (:block.repl/id props) [:block.repl/id (:block.repl/id props)]
-                                          (:block.prose/id props) [:block.prose/id (:block.prose/id props)]))}))
+                                        (str
+                                         (cond
+                                           (:block.repl/id props) [:block.repl/id (:block.repl/id props)]
+                                           (:block.prose/id props) [:block.prose/id (:block.prose/id props)])))}))
 
 (defsc Root [this {:keys [:block/blocks :root/unique-id]}]
-  {:query [{:block/blocks (comp/get-query #_Prose #_Repl Block)} :root/unique-id]
+  {:query [{:block/blocks (comp/get-query Block)} :root/unique-id]
    :initial-state (fn [_]
                     (let [b64-state (some-> js/window .-location .-href
                                             url/url :query (get "state"))
@@ -269,8 +269,8 @@
       (let [on-create (fn [before-id]
                         (comp/transact! this [(api/add-repl {:before-id before-id})]))
             on-delete (fn [id] (comp/transact! this [(api/delete-repl {:block.repl/id id })]))]
-        #_(map #(ui-repl % {:on-create on-create :on-delete on-delete}) blocks)
         (map #(ui-block % {:on-create on-create :on-delete on-delete}) blocks)
+        #_(map #(ui-repl % {:on-create on-create :on-delete on-delete}) blocks)
         #_(map #(ui-prose % {:on-create on-create :on-delete on-delete}) blocks))))
 
 (defn ^:export refresh
