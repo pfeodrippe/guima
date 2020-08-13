@@ -41,11 +41,11 @@
                                           [] (:block/blocks s))]
                      (-> s
                          (assoc-in [:block.repl/id id] {:block.repl/id id
-                                                  :block.repl/editor nil
-                                                  :block.repl/focus false
-                                                  :block.repl/result ""
-                                                  :block.repl/result-error? false
-                                                  :block.repl/code ""})
+                                                        :block.repl/editor nil
+                                                        :block.repl/focus false
+                                                        :block.repl/result ""
+                                                        :block.repl/result-error? false
+                                                        :block.repl/code ""})
                          (assoc :block/blocks new-list)
                          (assoc :root/unique-id id)))))))
 
@@ -57,16 +57,16 @@
                    (let [id (inc (:root/unique-id s))
                          new-list (reduce (fn [acc [ident old-id]]
                                             (if (= old-id before-id)
-                                              (conj acc [ident old-id] [:block.repl/id id])
+                                              (conj acc [ident old-id] [:block.prose/id id])
                                               (conj acc [ident old-id])))
                                           [] (:block/blocks s))]
                      (-> s
-                         (assoc-in [:block.repl/id id] {:block.repl/id id
-                                                  :block.repl/editor nil
-                                                  :block.repl/focus false
-                                                  :block.repl/result ""
-                                                  :block.repl/result-error? false
-                                                  :block.repl/code ""})
+                         (assoc-in [:block.prose/id id] {:block.prose/id id
+                                                        :block.prose/editor nil
+                                                        :block.prose/focus false
+                                                        :block.prose/result ""
+                                                        :block.prose/result-error? false
+                                                        :block.prose/code ""})
                          (assoc :block/blocks new-list)
                          (assoc :root/unique-id id)))))))
 
@@ -126,16 +126,16 @@
            :block.repl/code code)))
 
 (defmutation update-prose-text
-  [{:keys [:block.repl/id :block.prose/text]}]
+  [{:keys [:block.prose/id :block.prose/text]}]
   (action [{:keys [:state]}]
-    (swap! state update-in [:block.repl/id id] assoc
+    (swap! state update-in [:block.prose/id id] assoc
            :block.prose/text text)))
 
 (defmutation update-prose-editor
-  [{:keys [:block.repl/id :block.repl/editor]}]
+  [{:keys [:block.prose/id :block.prose/editor]}]
   (action [{:keys [:state]}]
-    (swap! state update-in [:block.repl/id id] assoc
-           :block.repl/editor editor)))
+    (swap! state update-in [:block.prose/id id] assoc
+           :block.prose/editor editor)))
 
 (defmutation update-repl-result
   [{:keys [:block.repl/id :block.repl/result :block.repl/result-error?]}]

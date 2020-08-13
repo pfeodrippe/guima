@@ -88,12 +88,19 @@
               (let [cm (add-code-mirror ref)]
                 (.on cm "beforeChange"
                      (fn [cm evt]
-                       (when (and (not (zero? id))
-                                  (empty? (.getValue cm))
-                                  (zero? (.. evt -to -line))
-                                  (zero? (.. evt -to -ch))
-                                  (= (.. evt -origin) "+delete"))
-                         (comp/transact! this [(api/delete-repl {:block.repl/id id})]))))
+                       (cond
+                         (and (not (zero? id))
+                              (empty? (.getValue cm))
+                              (zero? (.. evt -to -line))
+                              (zero? (.. evt -to -ch))
+                              (= (.. evt -origin) "+delete"))
+                         (comp/transact! this [(api/delete-repl {:block.repl/id id})])
+
+                         (and (= (.. evt -origin) "+input")
+                              (= (js->clj (.. evt -text)) ["" ""]) ; it's a enter in a empty REPL
+                              (empty? (.getValue cm)))
+                         (do (comp/transact! this [(api/delete-repl {:block.repl/id id})])
+                             (.cancel evt)))))
                 (.on cm "focus"
                      (fn [_cm _evt]
                        (comp/transact! this [(api/focus {:block.repl/id id})])))
