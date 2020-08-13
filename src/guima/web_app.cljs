@@ -200,27 +200,30 @@
 
 (def ui-prose (comp/computed-factory Prose {:keyfn :repl/id}))
 
-(defsc BlockUnion [this props]
+(defsc Block [this props parent-fns]
   {:ident (fn []
             (cond
               (:block.repl/id props)  [:block.repl/id (:block.repl/id props)]
               (:block.prose/id props) [:block.prose/id (:block.prose/id props)]
-              :else (println :>>>>>>>>>>>>>>>>ERROR!!!)))
-   :query (fn [] {:block.repl/id (comp/get-query Repl)
-                  :block.prose/id  (comp/get-query Prose)})}
+              :else [:block.repl/id nil]))
+   :query (fn []
+            {:block.repl/id (comp/get-query Repl)
+             :block.prose/id  (comp/get-query Prose)})}
+  (println :PAa parent-fns)
   (cond
-    (:block.repl/id props) (ui-repl props)
-    (:block.prose/id props) (ui-prose props)
+    (:block.repl/id props) (ui-repl props parent-fns)
+    (:block.prose/id props) (ui-prose props parent-fns)
     :else (d/div "Invalid ident used in app state.")))
 
-(def ui-block-union (comp/factory BlockUnion {:keyfn
-                                              (fn [props]
-                                                (cond
-                                                  (:block.repl/id props) [:block.repl/id (:block.repl/id props)]
-                                                  (:block.prose/id props) [:block.prose/id (:block.prose/id props)]))}))
+(def ui-block (comp/computed-factory Block
+                                     {:keyfn
+                                      (fn [props]
+                                        (cond
+                                          (:block.repl/id props) [:block.repl/id (:block.repl/id props)]
+                                          (:block.prose/id props) [:block.prose/id (:block.prose/id props)]))}))
 
 (defsc Root [this {:keys [:block/blocks :root/unique-id]}]
-  {:query [{:block/blocks {:block.repl/id (comp/get-query #_Prose  Repl)}} :root/unique-id]
+  {:query [{:block/blocks (comp/get-query #_Prose #_Repl Block)} :root/unique-id]
    :initial-state (fn [_]
                     (let [b64-state (some-> js/window .-location .-href
                                             url/url :query (get "state"))
@@ -228,9 +231,9 @@
                       {:block/blocks (or (some->> (:block/blocks initial-state)
                                                   (map-indexed (fn [idx s]
                                                                  (comp/get-initial-state
-                                                                  Prose #_Repl (assoc s :block.repl/id idx))))
+                                                                  #_Prose Repl (assoc s :block.repl/id idx))))
                                                   vec)
-                                         [(comp/get-initial-state Prose #_Repl {:block.repl/id 0})])
+                                         [(comp/get-initial-state #_Prose Repl {:block.repl/id 0})])
                        :root/unique-id (count (:block/blocks initial-state))}))}
   (d/div
       (d/div :.flex
@@ -266,7 +269,8 @@
       (let [on-create (fn [before-id]
                         (comp/transact! this [(api/add-repl {:before-id before-id})]))
             on-delete (fn [id] (comp/transact! this [(api/delete-repl {:block.repl/id id })]))]
-        (map #(ui-repl % {:on-create on-create :on-delete on-delete}) blocks)
+        #_(map #(ui-repl % {:on-create on-create :on-delete on-delete}) blocks)
+        (map #(ui-block % {:on-create on-create :on-delete on-delete}) blocks)
         #_(map #(ui-prose % {:on-create on-create :on-delete on-delete}) blocks))))
 
 (defn ^:export refresh
