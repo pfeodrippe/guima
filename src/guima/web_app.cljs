@@ -1,6 +1,7 @@
 (ns guima.web-app
   (:require-macros
-   [cljs.core.async.macros :refer [go]])
+   [cljs.core.async.macros :refer [go]]
+   [clojure.string :as str])
   (:require
    [cemerick.url :as url]
    [clojure.edn :as edn]
@@ -86,21 +87,23 @@
      :ref (fn [ref]
             (when (and ref (.querySelector ref "#editor"))
               (let [cm (add-code-mirror ref)]
+                (.on cm "keydown"
+                     (fn [cm, evt]
+                       (when (and (every? false? [(.-ctrlKey evt)
+                                                  (.-shiftKey evt)
+                                                  (.-altKey evt)])
+                                  (= (.-keyCode evt) 13)
+                                  (empty? (.getValue cm)))
+                         (comp/transact! this [(api/delete-repl {:block.repl/id id})])
+                         (.preventDefault evt))))
                 (.on cm "beforeChange"
                      (fn [cm evt]
-                       (cond
-                         (and (not (zero? id))
-                              (empty? (.getValue cm))
-                              (zero? (.. evt -to -line))
-                              (zero? (.. evt -to -ch))
-                              (= (.. evt -origin) "+delete"))
-                         (comp/transact! this [(api/delete-repl {:block.repl/id id})])
-
-                         (and (= (.. evt -origin) "+input")
-                              (= (js->clj (.. evt -text)) ["" ""]) ; it's a enter in a empty REPL
-                              (empty? (.getValue cm)))
-                         (do (comp/transact! this [(api/delete-repl {:block.repl/id id})])
-                             (.cancel evt)))))
+                       (when (and (not (zero? id))
+                                  (empty? (.getValue cm))
+                                  (zero? (.. evt -to -line))
+                                  (zero? (.. evt -to -ch))
+                                  (= (.. evt -origin) "+delete"))
+                         (comp/transact! this [(api/delete-repl {:block.repl/id id})]))))
                 (.on cm "focus"
                      (fn [_cm _evt]
                        (comp/transact! this [(api/focus {:block.repl/id id})])))
