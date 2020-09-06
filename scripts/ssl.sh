@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 
 LETSENCRYPT_EMAIL="pfeodrippe@gmail.com"
 DNSNAME="guima.cloud"
