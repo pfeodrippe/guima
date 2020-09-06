@@ -7,7 +7,7 @@ shadow-watch:
 	shadow-cljs watch app
 
 .PHONY: shadow-release
-shadow-watch:
+shadow-release:
 	shadow-cljs release app
 
 .PHONY: build-tailwind
