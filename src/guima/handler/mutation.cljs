@@ -84,7 +84,7 @@
                     (-> %
                         remove-all-focus
                         (update :block.repl/id dissoc id)
-                        #_(update-in [:block.repl/id previous-id] assoc :block.repl/focus true)
+                        (update-in [:block.repl/id previous-id] assoc :block.repl/focus true)
                         (merge/remove-ident* [:block.repl/id id] [:block/blocks]))))))
 
 (defmutation focus-at-previous-repl
